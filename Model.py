@@ -5,6 +5,8 @@ orange = 13
 yellow = 14
 white = 15
 
+#la til en kommentar
+
 class Cube():
     def __init__(self):
         self.white_face = Face(white, blue, red, green, orange)
