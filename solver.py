@@ -7,6 +7,8 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+import random
+
 blue = Model.blue
 green = Model.green
 red = Model.red
@@ -21,25 +23,114 @@ console_to_open_GL = {1 : (0, 0, 1), 2 : (0, 1, 0), 4 : (1, 0, 0), 13 : (1, 0.5,
 screen = terminal.get_terminal(conEmu=False)
 
 now = """
-yor
-ywy
-gbw
-yrr
-ggr
-ywo
-goo
-ooy
-goo
-ggr
-gbb
-bww
-bbw
-yrr
-bwr
-gbw
-wyb
-ory
+www
+www
+www
+ggg
+ggg
+ggg
+ooo
+ooo
+ooo
+bbb
+bbb
+bbb
+rrr
+rrr
+rrr
+yyy
+yyy
+yyy
 """
+
+class Rotation:
+    """Manage rotation of a given face color"""
+    def __init__(self, facecolor, angle_increase=1):
+        self.facecolor = facecolor
+        self.angle_increase = angle_increase
+        self.rotation = 0
+        self.completed = False
+
+    def should_rotate(self, color, tilenum):
+        """Whether the given tilenum with the given color should be rotated
+        when the face with facecolor is rotated"""
+        if self.facecolor == color:
+            return True
+
+        if self.facecolor == "red":
+            # Red affects yellow, blue, green, white
+            if color == "white" and tilenum in [2, 5, 8]:
+                return True
+            if color == "blue" and tilenum in [0, 3, 6]:
+                return True
+            if color == "yellow" and tilenum in [2, 5, 8]:
+                return True
+            if color == "green" and tilenum in [2, 5, 8]:
+                return True
+        elif self.facecolor == "yellow":
+            # Yellow affects red, blue, orange, green
+            if color in ["red", "orange", "green", "blue"] and tilenum in [6, 7, 8]:
+                return True
+
+        elif self.facecolor == "green":
+            # Green affects red, yellow, orange, white
+            if color == "red" and tilenum in [0, 3, 6]:
+                return True
+            if color == "orange" and tilenum in [2, 5, 8]:
+                return True
+            if color == "yellow" and tilenum in [0, 1, 2]:
+                return True
+            if color == "white" and tilenum in [6, 7, 8]:
+                return True
+        elif self.facecolor == "blue":
+            # Blue affects orange, yellow, red, white
+            if color == "red" and tilenum in [2, 5, 8]:
+                return True
+            if color == "orange" and tilenum in [0, 3, 6]:
+                return True
+            if color == "yellow" and tilenum in [6, 7, 8]:
+                return True
+            if color == "white" and tilenum in [0, 1, 2]:
+                return True
+        elif self.facecolor == "orange":
+            # Orange affects yellow, blue, white, green
+            if color == "white" and tilenum in [0, 3, 6]:
+                return True
+            if color == "blue" and tilenum in [2, 5, 8]:
+                return True
+            if color == "yellow" and tilenum in [0, 3, 6]:
+                return True
+            if color == "green" and tilenum in [0, 3, 6]:
+                return True
+        elif self.facecolor == "white":
+            # White affects blue, red, green, orange
+            if color in ["green", "blue", "red", "orange"] and tilenum in [0, 1, 2]:
+                return True
+
+    def rotate(self):
+        """Rotate by the given increase"""
+        self.rotation += self.angle_increase
+        if self.rotation >= 90:
+            self.rotation = 90
+            self.completed = True
+        if self.rotation <= -90:
+            self.rotation = -90
+            self.completed = True
+
+    def apply_rotation(self):
+        """Apply rotation matrix depending on face color"""
+        if self.facecolor == "red":
+            glRotatef(self.rotation, -1, 0, 0)
+        if self.facecolor == "orange":
+            glRotatef(self.rotation, 1, 0, 0)
+        if self.facecolor == "green":
+            glRotatef(self.rotation, 0, 0, -1)
+        if self.facecolor == "blue":
+            glRotatef(self.rotation, 0, 0, 1)
+        if self.facecolor == "yellow":
+            glRotatef(self.rotation, 0, 1, 0)
+        if self.facecolor == "white":
+            glRotatef(self.rotation, 0, -1, 0)
 
 class Mover():
     def __init__(self, cube):
@@ -117,28 +208,32 @@ class Mover():
             y += 2
         screen.set_color(15, 0)
 
-    def Open_GL_draw(self):
+    def Open_GL_draw(self, r):
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
         #print(self.cube.faces["green"].squares)
-        self.DrawFaceFrontBack(1.5, self.cube.faces["green"].squares [::-1])
-        self.DrawFaceFrontBack(-1.5, [self.cube.faces["blue"].squares[2][::-1], self.cube.faces["blue"].squares[1][::-1], self.cube.faces["blue"].squares[0][::-1]])
+        self.DrawFaceFront(1.5, self.cube.faces["green"].squares, "green", r)
+        self.DrawFaceBack(-1.5, self.cube.faces["blue"].squares, "blue", r)
 
-        self.DrawFaceSides(-1.5, self.cube.faces["orange"].squares [::-1])
-        self.DrawFaceSides(1.5, [self.cube.faces["red"].squares[2][::-1], self.cube.faces["red"].squares[1][::-1], self.cube.faces["red"].squares[0][::-1]])
+        self.DrawFaceLeft(-1.5, self.cube.faces["orange"].squares, "orange", r)
+        self.DrawFaceRight(1.5, self.cube.faces["red"].squares, "red", r)
 
-        self.DrawFaceTopBottom(1.5, self.cube.faces["white"].squares)
-        self.DrawFaceTopBottom(-1.5, self.cube.faces["yellow"].squares [::-1])
+        self.DrawFaceTop(1.5, self.cube.faces["white"].squares, "white", r)
+        self.DrawFaceBottom(-1.5, self.cube.faces["yellow"].squares, "yellow", r)
 
-    def DrawFaceFrontBack(self, z, tiles):
+        # Function for generating front and back faces (z is fixed)
+    def DrawFaceFront(self, z, tiles, facecolor, rotation):
         colors = []
         for row in tiles:
             for tile in row:
                 colors.append(tile.col1)
-        
+
         tilenum = 0
-        for ycorner in (-1.5, -0.5, 0.5):
+        for ycorner in (0.5, -0.5, -1.5):
             for xcorner in (-1.5, -0.5, 0.5):
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPushMatrix()
+                    rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((xcorner+self.offset, ycorner+self.offset, z))
@@ -146,17 +241,46 @@ class Mover():
                 glVertex3fv((xcorner+(1-self.offset), ycorner+(1-self.offset), z))
                 glVertex3fv((xcorner+self.offset, ycorner+(1-self.offset), z))
                 glEnd()
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPopMatrix()
                 tilenum += 1
 
-    def DrawFaceSides(self, x, tiles):
+    def DrawFaceBack(self, z, tiles, facecolor, rotation):
         colors = []
         for row in tiles:
             for tile in row:
                 colors.append(tile.col1)
-        
+
         tilenum = 0
-        for ycorner in (-1.5, -0.5, 0.5):
+        for ycorner in (0.5, -0.5, -1.5):
+            for xcorner in (0.5, -0.5, -1.5):
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPushMatrix()
+                    rotation.apply_rotation()
+                glBegin(GL_POLYGON)
+                glColor3f(*console_to_open_GL[colors[tilenum]])
+                glVertex3fv((xcorner+self.offset, ycorner+self.offset, z))
+                glVertex3fv((xcorner+(1-self.offset), ycorner+self.offset, z))
+                glVertex3fv((xcorner+(1-self.offset), ycorner+(1-self.offset), z))
+                glVertex3fv((xcorner+self.offset, ycorner+(1-self.offset), z))
+                glEnd()
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPopMatrix()
+                tilenum += 1
+
+    # Function for generating left and right faces (x is fixed)
+    def DrawFaceLeft(self, x, tiles, facecolor, rotation):
+        colors = []
+        for row in tiles:
+            for tile in row:
+                colors.append(tile.col1)
+
+        tilenum = 0
+        for ycorner in (0.5, -0.5, -1.5):
             for zcorner in (-1.5, -0.5, 0.5):
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPushMatrix()
+                    rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((x, ycorner+self.offset, zcorner+self.offset))
@@ -164,17 +288,46 @@ class Mover():
                 glVertex3fv((x, ycorner+(1-self.offset), zcorner+(1-self.offset)))
                 glVertex3fv((x, ycorner+(1-self.offset), zcorner+self.offset))
                 glEnd()
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPopMatrix()
                 tilenum += 1
 
-    def DrawFaceTopBottom(self, y, tiles):
+    def DrawFaceRight(self, x, tiles, facecolor, rotation):
         colors = []
         for row in tiles:
             for tile in row:
                 colors.append(tile.col1)
-        
+
+        tilenum = 0
+        for ycorner in (0.5, -0.5, -1.5):
+            for zcorner in (0.5, -0.5, -1.5):
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPushMatrix()
+                    rotation.apply_rotation()
+                glBegin(GL_POLYGON)
+                glColor3f(*console_to_open_GL[colors[tilenum]])
+                glVertex3fv((x, ycorner+self.offset, zcorner+self.offset))
+                glVertex3fv((x, ycorner+self.offset, zcorner+(1-self.offset)))
+                glVertex3fv((x, ycorner+(1-self.offset), zcorner+(1-self.offset)))
+                glVertex3fv((x, ycorner+(1-self.offset), zcorner+self.offset))
+                glEnd()
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPopMatrix()
+                tilenum += 1
+
+    # Function for generating top and bottom faces (y is fixed)
+    def DrawFaceTop(self, y, tiles, facecolor, rotation):
+        colors = []
+        for row in tiles:
+            for tile in row:
+                colors.append(tile.col1)
+
         tilenum = 0
         for zcorner in (-1.5, -0.5, 0.5):
             for xcorner in (-1.5, -0.5, 0.5):
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPushMatrix()
+                    rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((xcorner+self.offset, y, zcorner+self.offset))
@@ -182,6 +335,31 @@ class Mover():
                 glVertex3fv((xcorner+(1-self.offset), y, zcorner+(1-self.offset)))
                 glVertex3fv((xcorner+self.offset, y, zcorner+(1-self.offset)))
                 glEnd()
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPopMatrix()
+                tilenum += 1
+
+    def DrawFaceBottom(self, y, tiles, facecolor, rotation):
+        colors = []
+        for row in tiles:
+            for tile in row:
+                colors.append(tile.col1)
+
+        tilenum = 0
+        for zcorner in (0.5, -0.5, -1.5):
+            for xcorner in (-1.5, -0.5, 0.5):
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPushMatrix()
+                    rotation.apply_rotation()
+                glBegin(GL_POLYGON)
+                glColor3f(*console_to_open_GL[colors[tilenum]])
+                glVertex3fv((xcorner+self.offset, y, zcorner+self.offset))
+                glVertex3fv((xcorner+(1-self.offset), y, zcorner+self.offset))
+                glVertex3fv((xcorner+(1-self.offset), y, zcorner+(1-self.offset)))
+                glVertex3fv((xcorner+self.offset, y, zcorner+(1-self.offset)))
+                glEnd()
+                if rotation.should_rotate(facecolor, tilenum):
+                    glPopMatrix()
                 tilenum += 1
 
     def paint(self, c):
@@ -475,12 +653,12 @@ def main():
     mover = Mover(cube)
 
     pygame.init()
-    display = (800,600)
-    pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
+    size = (800,600)
+    display = pygame.display.set_mode(size, DOUBLEBUF|OPENGL)
 
     clock = pygame.time.Clock()
 
-    gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
+    gluPerspective(45, (size[0]/size[1]), 0.1, 50.0)
     glTranslatef(0.0, 0.0, -10.0)
     glEnable(GL_DEPTH_TEST)
 
@@ -489,11 +667,15 @@ def main():
     rotate_X = 0
     rotate_Y = 0
 
-    mover.white_cross()
+    #mover.white_cross()
     #mover.insert_corners()
     
-    mover.short()
-    print(mover.notes())
+    #mover.short()
+    #print(mover.notes())
+
+    color_picker = ["red", "white", "orange", "blue", "green"]
+    r = Rotation(random.choice(color_picker), 10)
+    rs = 0
     
     while True:
         for event in pygame.event.get():
@@ -510,14 +692,26 @@ def main():
                     rotate_X = 1
                 elif event.key == pygame.K_DOWN:
                     rotate_X = -1
+                elif event.key == pygame.K_SPACE:
+                    print(mover.notes())
 
             if event.type == pygame.KEYUP:
                 rotate_X = 0
                 rotate_Y = 0
         
-        glRotatef(1, rotate_X, rotate_Y, 0)
-        mover.Open_GL_draw()
+        if not (rotate_X == 0 and rotate_Y == 0):
+            glRotatef(1, rotate_X, rotate_Y, 0)
 
+        mover.Open_GL_draw(r)
+
+        if rs < 20:
+            r.rotate()
+        if r.completed:
+            mover.move(r.facecolor)
+            if rs < 20:
+                r = Rotation(random.choice(color_picker), 10)
+                rs += 1
+            
         clock.tick(60)
         pygame.display.flip()
 
