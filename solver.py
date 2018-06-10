@@ -23,22 +23,22 @@ console_to_open_GL = {1 : (0, 0, 1), 2 : (0, 1, 0), 4 : (1, 0, 0), 13 : (1, 0.5,
 screen = terminal.get_terminal(conEmu=False)
 
 now = """
+wbw
 www
 www
-www
+gbg
 ggg
 ggg
-ggg
+obo
 ooo
 ooo
-ooo
+bwb
 bbb
 bbb
-bbb
+rbr
 rrr
 rrr
-rrr
-yyy
+yby
 yyy
 yyy
 """
@@ -132,7 +132,7 @@ class Rotation:
         if self.facecolor == "white":
             glRotatef(self.rotation, 0, -1, 0)
 
-class Mover():
+class Solver():
     def __init__(self, cube):
         self.cube = cube
 
@@ -141,6 +141,45 @@ class Mover():
         self.moves = []
 
         self.offset = 0.05
+
+        self.up = 0
+        self.left = 0
+        self.face = 1
+        self.rot = 0
+        self.left_rot = 0
+        self.up_rot = 0
+
+        self.new = [
+                [
+                    [[3, 2], [4, 1], [1, 0], [2, 3]],
+                    [[4, 2], [1, 1], [2, 0], [3, 3]],
+                    [[1, 2], [2, 1], [3, 0], [4, 3]],
+                    [[2, 2], [3, 1], [4, 0], [1, 3]]],
+                [
+                    [[0, 0], [4, 0], [5, 0], [2, 0]],
+                    [[4, 1], [5, 1], [2, 1], [0, 1]],
+                    [[5, 2], [2, 2], [0, 2], [4, 2]],
+                    [[2, 3], [0, 3], [4, 3], [5, 3]]],
+                [
+                    [[0, 1], [1, 0], [5, 3], [3, 0]],
+                    [[1, 1], [5, 0], [3, 1], [0, 2]],
+                    [[5, 1], [3, 2], [0, 3], [1, 2]],
+                    [[3, 3], [0, 0], [1, 3], [5, 2]]],
+                [
+                    [[0, 2], [2, 0], [5, 2], [4, 0]],
+                    [[2, 1], [5, 3], [4, 1], [0, 3]],
+                    [[5, 0], [4, 2], [0, 0], [2, 2]],
+                    [[4, 3], [0, 1], [2, 3], [5, 1]]],
+                [
+                    [[0, 3], [3, 0], [5, 1], [1, 0]],
+                    [[3, 1], [5, 2], [1, 1], [0, 0]],
+                    [[5, 3], [1, 2], [0, 1], [3, 2]],
+                    [[1, 3], [0, 2], [3, 3], [5, 4]]],
+                [
+                    [[1, 0], [4, 3], [3, 2], [2, 1]],
+                    [[4, 0], [3, 3], [2, 2], [1, 1]],
+                    [[3, 0], [2, 3], [1, 2], [4, 1]],
+                    [[2, 0], [1, 3], [4, 2], [3, 1]]]]
 
     def setMode(self, mode):
         self.moveMode = mode
@@ -211,7 +250,6 @@ class Mover():
     def Open_GL_draw(self, r):
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
-        #print(self.cube.faces["green"].squares)
         self.DrawFaceFront(1.5, self.cube.faces["green"].squares, "green", r)
         self.DrawFaceBack(-1.5, self.cube.faces["blue"].squares, "blue", r)
 
@@ -221,7 +259,69 @@ class Mover():
         self.DrawFaceTop(1.5, self.cube.faces["white"].squares, "white", r)
         self.DrawFaceBottom(-1.5, self.cube.faces["yellow"].squares, "yellow", r)
 
-        # Function for generating front and back faces (z is fixed)
+        if not (self.up == 0 and self.left == 0):
+
+            rotation = [
+                [
+                    [self.up, 0, -self.left],
+                    [self.left, 0, self.up],
+                    [-self.up, 0, self.left],
+                    [-self.left, 0, -self.up]],
+                [
+                    [self.up, self.left, 0],
+                    [self.left, -self.up, 0],
+                    [-self.up, -self.left, 0],
+                    [-self.left, self.up, 0]],
+                [
+                    [0, self.left, self.up],
+                    [0, -self.up, self.left],
+                    [0, -self.left, -self.up],
+                    [0, self.up, -self.left]],
+                [
+                    [-self.up, self.left, 0],
+                    [-self.left, -self.up, 0],
+                    [self.up, -self.left, 0],
+                    [self.left, self.up, 0]],
+                [
+                    [0, self.left, -self.up],
+                    [0, -self.up, -self.left],
+                    [0, -self.left, self.up],
+                    [0, self.up, self.left]],
+                [
+                    [self.up, 0, self.left],
+                    [self.left, 0, -self.up],
+                    [-self.up, 0, -self.left],
+                    [-self.left, 0, self.up]
+                    ]
+                ]
+            rota = rotation[self.face][self.rot]
+            newa = self.new[self.face][self.rot]
+
+            glRotatef(1, rota[0], rota[1], rota[2])
+
+            self.up_rot += self.up
+            self.left_rot += self.left
+            
+            if self.up_rot >= 45:
+                self.up_rot = self.up_rot - 90
+                self.rot = newa[0][1] 
+                self.face = newa[0][0]
+
+            if self.left_rot >= 45:
+                self.left_rot = self.left_rot - 90
+                self.rot = newa[3][1]
+                self.face = newa[3][0]
+
+            if self.up_rot < -45:
+                self.up_rot = self.up_rot + 90
+                self.rot = newa[2][1]
+                self.face = newa[2][0]
+                
+            if self.left_rot < -45:
+                self.left_rot = self.left_rot + 90
+                self.rot = newa[1][1]
+                self.face = newa[1][0]
+
     def DrawFaceFront(self, z, tiles, facecolor, rotation):
         colors = []
         for row in tiles:
@@ -244,7 +344,7 @@ class Mover():
                 if rotation.should_rotate(facecolor, tilenum):
                     glPopMatrix()
                 tilenum += 1
-
+                
     def DrawFaceBack(self, z, tiles, facecolor, rotation):
         colors = []
         for row in tiles:
@@ -479,7 +579,6 @@ class Mover():
         redo = []
 
         pos = self.getEdge(white, color)
-        print(pos)
         if pos[1] == "white" or pos[1] == "yellow":
             self.move(pos[0])
             
@@ -587,7 +686,6 @@ class Mover():
             self.move(left)
 
         pos = self.getCorner(col1, col2, white)
-        print(pos)
 
         if pos[0] == "yellow":
             side = pos[1]
@@ -648,9 +746,41 @@ class Mover():
         self.insert_corner(blue, orange, protect)
         protect.append(["blue", "orange"])
 
+    def event(self, event):
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            quit()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                self.left = -1
+            elif event.key == pygame.K_LEFT:
+                self.left = 1
+            elif event.key == pygame.K_UP:
+                self.up = 1
+            elif event.key == pygame.K_DOWN:
+                self.up = -1
+            elif event.key == pygame.K_SPACE:
+                print(self.notes())
+            elif event.key == pygame.K_x:
+                self.xDeg += 90
+                glRotatef(90, 1, 0, 0)
+            elif event.key == pygame.K_y:
+                self.yDeg += 90
+                glRotatef(90, 0, 1, 0)
+            elif event.key == pygame.K_z:
+                glRotatef(90, 0, 0, 1)
+                self.zDeg += 90
+
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+                self.up = 0
+            elif event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                self.left = 0
+
 def main():
     cube = Model.Cube()
-    mover = Mover(cube)
+    solver = Solver(cube)
 
     pygame.init()
     size = (800,600)
@@ -662,10 +792,9 @@ def main():
     glTranslatef(0.0, 0.0, -10.0)
     glEnable(GL_DEPTH_TEST)
 
-    mover.paint(now)
+    solver.paint(now)
 
-    rotate_X = 0
-    rotate_Y = 0
+    
 
     #mover.white_cross()
     #mover.insert_corners()
@@ -674,43 +803,24 @@ def main():
     #print(mover.notes())
 
     color_picker = ["red", "white", "orange", "blue", "green"]
-    r = Rotation(random.choice(color_picker), 10)
+    r = Rotation(random.choice(color_picker))
     rs = 0
+
+    
     
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+            solver.event(event)
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    rotate_Y = -1
-                elif event.key == pygame.K_LEFT:
-                    rotate_Y = 1
-                elif event.key == pygame.K_UP:
-                    rotate_X = 1
-                elif event.key == pygame.K_DOWN:
-                    rotate_X = -1
-                elif event.key == pygame.K_SPACE:
-                    print(mover.notes())
-
-            if event.type == pygame.KEYUP:
-                rotate_X = 0
-                rotate_Y = 0
-        
-        if not (rotate_X == 0 and rotate_Y == 0):
-            glRotatef(1, rotate_X, rotate_Y, 0)
-
-        mover.Open_GL_draw(r)
-
+        solver.Open_GL_draw(r)
+        """
         if rs < 20:
             r.rotate()
         if r.completed:
-            mover.move(r.facecolor)
+            solver.move(r.facecolor)
             if rs < 20:
-                r = Rotation(random.choice(color_picker), 10)
-                rs += 1
+                r = Rotation(random.choice(color_picker), 1)
+                rs += 1"""
             
         clock.tick(60)
         pygame.display.flip()

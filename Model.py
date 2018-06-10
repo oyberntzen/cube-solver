@@ -75,8 +75,6 @@ class Cube():
                 n = new[y][x]
                 o = row[x]
 
-                #print(row)
-
                 o.col1 = n
 
         self.update(face)
