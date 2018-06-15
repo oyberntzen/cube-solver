@@ -23,24 +23,24 @@ console_to_open_GL = {1 : (0, 0, 1), 2 : (0, 1, 0), 4 : (1, 0, 0), 13 : (1, 0.5,
 screen = terminal.get_terminal(conEmu=False)
 
 now = """
+bgg
+wwy
+oor
+gyg
+wgr
+rrb
+wry
+gob
+bwy
+wyo
+rbo
 www
-www
-www
-ggg
-ggg
-ggg
-ooo
-ooo
-ooo
-bbb
-bbb
-bbb
-rrr
-rrr
-rrr
-yyy
-yyy
-yyy
+ybr
+yrg
+obo
+bby
+gyo
+rog
 """
 
 class Rotation:
@@ -156,6 +156,13 @@ class Solver():
                     [[0, 3], [3, 0], [5, 1], [1, 0]],
                     [[1, 0], [4, 3], [3, 2], [2, 1]]]
 
+        self.i = 0
+        self.m = False
+        self.back = False
+        self.tripl = False
+        self.r = None
+        self.l = 0
+
     def setMode(self, mode):
         self.moveMode = mode
 
@@ -222,17 +229,17 @@ class Solver():
             y += 2
         screen.set_color(15, 0)
 
-    def Open_GL_draw(self, r):
+    def Open_GL_draw(self):
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
-        self.DrawFaceFront(1.5, self.cube.faces["green"].squares, "green", r)
-        self.DrawFaceBack(-1.5, self.cube.faces["blue"].squares, "blue", r)
+        self.DrawFaceFront(1.5, self.cube.faces["green"].squares, "green", self.r)
+        self.DrawFaceBack(-1.5, self.cube.faces["blue"].squares, "blue", self.r)
 
-        self.DrawFaceLeft(-1.5, self.cube.faces["orange"].squares, "orange", r)
-        self.DrawFaceRight(1.5, self.cube.faces["red"].squares, "red", r)
+        self.DrawFaceLeft(-1.5, self.cube.faces["orange"].squares, "orange", self.r)
+        self.DrawFaceRight(1.5, self.cube.faces["red"].squares, "red", self.r)
 
-        self.DrawFaceTop(1.5, self.cube.faces["white"].squares, "white", r)
-        self.DrawFaceBottom(-1.5, self.cube.faces["yellow"].squares, "yellow", r)
+        self.DrawFaceTop(1.5, self.cube.faces["white"].squares, "white", self.r)
+        self.DrawFaceBottom(-1.5, self.cube.faces["yellow"].squares, "yellow", self.r)
 
         if not (self.up == 0 and self.left == 0):
 
@@ -300,6 +307,54 @@ class Solver():
                 self.rot = self.trans_new(self.face, self.rot, 1)[1]
                 self.face = self.trans_new(self.face, temp, 1)[0]
 
+    def update(self):
+        if self.m:
+            if not self.r:
+                self.tripl = False
+                if not self.back:
+                    if self.i + 2 < self.l:
+                        if self.moves[self.i] == self.moves[self.i + 1] and self.moves[self.i] == self.moves[self.i + 2]:
+                            self.r = Rotation(self.moves[self.i], -1)
+                            self.tripl = True
+                        else:
+                            self.r = Rotation(self.moves[self.i], 1)
+                    else:
+                        self.r = Rotation(self.moves[self.i], 1)
+                else:
+                    if self.i - 3 >= 0:
+                        if self.moves[self.i - 1] == self.moves[self.i - 2] and self.moves[self.i - 1] == self.moves[self.i - 3]:
+                            self.r = Rotation(self.moves[self.i - 1], 1)
+                            self.tripl = True
+                        else:
+                            self.r = Rotation(self.moves[self.i - 1], -1)
+                    else:
+                        self.r = Rotation(self.moves[self.i - 1], -1)
+            
+            self.r.rotate()
+            if self.r: 
+                if self.r.completed:
+                    
+                    self.m = False
+                    if not self.back:
+                        self.move(self.moves[self.i])
+                        self.i += 1
+                        if self.tripl:
+                            self.move(self.moves[self.i])
+                            self.move(self.moves[self.i + 1])
+                            self.i += 2
+                    else:
+                        if not self.tripl:
+                            self.move(self.moves[self.i - 1])
+                            self.move(self.moves[self.i - 1])
+                            self.move(self.moves[self.i - 1])
+                            self.i -= 1
+                        else:
+                            self.move(self.moves[self.i - 1])
+                            self.i -= 3
+                    self.back = False
+                    self.rs = 0
+                    self.r = None
+
     def DrawFaceFront(self, z, tiles, facecolor, rotation):
         colors = []
         for row in tiles:
@@ -309,9 +364,10 @@ class Solver():
         tilenum = 0
         for ycorner in (0.5, -0.5, -1.5):
             for xcorner in (-1.5, -0.5, 0.5):
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPushMatrix()
-                    rotation.apply_rotation()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPushMatrix()
+                        rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((xcorner+self.offset, ycorner+self.offset, z))
@@ -319,8 +375,9 @@ class Solver():
                 glVertex3fv((xcorner+(1-self.offset), ycorner+(1-self.offset), z))
                 glVertex3fv((xcorner+self.offset, ycorner+(1-self.offset), z))
                 glEnd()
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPopMatrix()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPopMatrix()
                 tilenum += 1
                 
     def DrawFaceBack(self, z, tiles, facecolor, rotation):
@@ -332,9 +389,10 @@ class Solver():
         tilenum = 0
         for ycorner in (0.5, -0.5, -1.5):
             for xcorner in (0.5, -0.5, -1.5):
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPushMatrix()
-                    rotation.apply_rotation()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPushMatrix()
+                        rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((xcorner+self.offset, ycorner+self.offset, z))
@@ -342,8 +400,9 @@ class Solver():
                 glVertex3fv((xcorner+(1-self.offset), ycorner+(1-self.offset), z))
                 glVertex3fv((xcorner+self.offset, ycorner+(1-self.offset), z))
                 glEnd()
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPopMatrix()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPopMatrix()
                 tilenum += 1
 
     # Function for generating left and right faces (x is fixed)
@@ -356,9 +415,10 @@ class Solver():
         tilenum = 0
         for ycorner in (0.5, -0.5, -1.5):
             for zcorner in (-1.5, -0.5, 0.5):
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPushMatrix()
-                    rotation.apply_rotation()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPushMatrix()
+                        rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((x, ycorner+self.offset, zcorner+self.offset))
@@ -366,8 +426,9 @@ class Solver():
                 glVertex3fv((x, ycorner+(1-self.offset), zcorner+(1-self.offset)))
                 glVertex3fv((x, ycorner+(1-self.offset), zcorner+self.offset))
                 glEnd()
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPopMatrix()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPopMatrix()
                 tilenum += 1
 
     def DrawFaceRight(self, x, tiles, facecolor, rotation):
@@ -379,9 +440,10 @@ class Solver():
         tilenum = 0
         for ycorner in (0.5, -0.5, -1.5):
             for zcorner in (0.5, -0.5, -1.5):
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPushMatrix()
-                    rotation.apply_rotation()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPushMatrix()
+                        rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((x, ycorner+self.offset, zcorner+self.offset))
@@ -389,8 +451,9 @@ class Solver():
                 glVertex3fv((x, ycorner+(1-self.offset), zcorner+(1-self.offset)))
                 glVertex3fv((x, ycorner+(1-self.offset), zcorner+self.offset))
                 glEnd()
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPopMatrix()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPopMatrix()
                 tilenum += 1
 
     # Function for generating top and bottom faces (y is fixed)
@@ -403,9 +466,10 @@ class Solver():
         tilenum = 0
         for zcorner in (-1.5, -0.5, 0.5):
             for xcorner in (-1.5, -0.5, 0.5):
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPushMatrix()
-                    rotation.apply_rotation()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPushMatrix()
+                        rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((xcorner+self.offset, y, zcorner+self.offset))
@@ -413,8 +477,9 @@ class Solver():
                 glVertex3fv((xcorner+(1-self.offset), y, zcorner+(1-self.offset)))
                 glVertex3fv((xcorner+self.offset, y, zcorner+(1-self.offset)))
                 glEnd()
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPopMatrix()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPopMatrix()
                 tilenum += 1
 
     def DrawFaceBottom(self, y, tiles, facecolor, rotation):
@@ -426,9 +491,10 @@ class Solver():
         tilenum = 0
         for zcorner in (0.5, -0.5, -1.5):
             for xcorner in (-1.5, -0.5, 0.5):
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPushMatrix()
-                    rotation.apply_rotation()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPushMatrix()
+                        rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 glColor3f(*console_to_open_GL[colors[tilenum]])
                 glVertex3fv((xcorner+self.offset, y, zcorner+self.offset))
@@ -436,8 +502,9 @@ class Solver():
                 glVertex3fv((xcorner+(1-self.offset), y, zcorner+(1-self.offset)))
                 glVertex3fv((xcorner+self.offset, y, zcorner+(1-self.offset)))
                 glEnd()
-                if rotation.should_rotate(facecolor, tilenum):
-                    glPopMatrix()
+                if rotation:
+                    if rotation.should_rotate(facecolor, tilenum):
+                        glPopMatrix()
                 tilenum += 1
 
     def paint(self, c):
@@ -607,6 +674,7 @@ class Solver():
         protect.append("red")
 
     def insert_corner(self, col1, col2, protect):
+        
         pos = self.getCorner(col1, col2, white)
 
         right = { "green" : "red", "red" : "blue", "blue" : "orange", "orange" : "green" }
@@ -641,7 +709,7 @@ class Solver():
                 pos = self.getCorner(col1, col2, white)
                 correct = False
                 for i in protect:
-                    if (pos[0] == protect[0] and pos[1] == protect[1]) or (pos[0] == protect[1] and pos[1] == protect[0]):
+                    if (pos[0] == i[0] and pos[1] == i[1]) or (pos[0] == i[1] and pos[1] == i[0]):
                         correct = True
 
                 if not correct:
@@ -745,6 +813,12 @@ class Solver():
             elif event.key == pygame.K_SPACE:
                 print(self.notes())
 
+            if event.key == pygame.K_d and self.i < self.l:
+                self.m = True
+            if event.key == pygame.K_a and self.i > 0:
+                self.m = True
+                self.back = True
+
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                 self.up = 0
@@ -762,6 +836,10 @@ class Solver():
 
         return new_l[dir]
 
+    def start_loop(self):
+        self.l = len(self.moves)
+        self.paint(now)
+
 def main():
     cube = Model.Cube()
     solver = Solver(cube)
@@ -778,38 +856,25 @@ def main():
 
     solver.paint(now)
 
+    solver.white_cross()
+    solver.insert_corners()
     
+    solver.short()
+    
+    
+    solver.paint(now)
 
-    #mover.white_cross()
-    #mover.insert_corners()
-    
-    #mover.short()
-    #solver.move("white")
-    print(solver.moves)
-    moves = ["white", "green", "blue", "blue", "yellow"]
-    r = Rotation(moves[0])
-    rs = 0
-    i = 0
-    done = False
+    solver.start_loop()
     
     while True:
         for event in pygame.event.get():
             solver.event(event)
+            
+                
 
-        solver.Open_GL_draw(r)
+        solver.Open_GL_draw()
+        solver.update()
         
-        if not done:
-            if rs < 20:
-                r.rotate()
-            if r.completed:
-                solver.move(r.facecolor)
-                if i < len(moves) - 1:
-                    i += 1
-                else:
-                    done = True
-                if rs < 20: 
-                    r = Rotation(moves[i], 1)
-                    rs += 1
             
         clock.tick(60)
         pygame.display.flip()
