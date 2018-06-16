@@ -29,19 +29,19 @@ www
 www
 ggg
 ggg
-bor
-ooo
-ooo
-gyr
-bbb
-bbb
-byo
-rrr
-rrr
-ygy
-yyg
-ryy
 ybo
+ooo
+ooo
+yob
+bbb
+bbb
+ygr
+rrr
+rrr
+gro
+ryy
+yyy
+gyb
 """
 
 class Rotation:
@@ -860,6 +860,98 @@ class Solver():
         self.insert_other_edge(green, orange)
         self.insert_other_edge(red, blue)
 
+    def yellow_cross(self):
+        up = [self.cube.faces["yellow"].squares[2][1].col1 == yellow,
+              self.cube.faces["yellow"].squares[1][2].col1 == yellow,
+              self.cube.faces["yellow"].squares[0][1].col1 == yellow,
+              self.cube.faces["yellow"].squares[1][0].col1 == yellow]
+
+        if not True in up:
+            self.cross_algo("green")
+
+        up = [self.cube.faces["yellow"].squares[2][1].col1 == yellow,
+              self.cube.faces["yellow"].squares[1][2].col1 == yellow,
+              self.cube.faces["yellow"].squares[0][1].col1 == yellow,
+              self.cube.faces["yellow"].squares[1][0].col1 == yellow]
+        
+        if up[2] and up[3] and not up[0]:
+            self.cross_algo("green")
+        elif up[3] and up[0] and not up[1]:
+            self.cross_algo("orange")
+        elif up[0] and up[1] and not up[2]:
+            self.cross_algo("blue")
+        elif up[1] and up[2] and not up[3]:
+            self.cross_algo("red")
+
+        up = [self.cube.faces["yellow"].squares[2][1].col1 == yellow,
+              self.cube.faces["yellow"].squares[1][2].col1 == yellow,
+              self.cube.faces["yellow"].squares[0][1].col1 == yellow,
+              self.cube.faces["yellow"].squares[1][0].col1 == yellow]
+
+        if up[2] and up[0] and not up[1]:
+            self.cross_algo("orange")
+        elif up[1] and up[3] and not up[0]:
+            self.cross_algo("green")
+
+        sides = [face_names2[self.cube.faces["yellow"].squares[2][1].col2],
+                 face_names2[self.cube.faces["yellow"].squares[1][2].col2],
+                 face_names2[self.cube.faces["yellow"].squares[0][1].col2],
+                 face_names2[self.cube.faces["yellow"].squares[1][0].col2]]
+
+        right = {"green" : "orange", "orange" : "blue", "blue" : "red", "red" : "green"}
+
+        if not (sides[1] == right[sides[0]] and sides[2] == right[sides[1]] and sides[3] == right[sides[2]] and sides[0] == right[sides[3]]):
+
+            if sides[0] == right[right[sides[2]]]:
+                self.cross_algo2("green")
+            elif sides[1] == right[right[sides[3]]]:
+                self.cross_algo2("orange")
+
+            sides = [face_names2[self.cube.faces["yellow"].squares[2][1].col2],
+                     face_names2[self.cube.faces["yellow"].squares[1][2].col2],
+                     face_names2[self.cube.faces["yellow"].squares[0][1].col2],
+                     face_names2[self.cube.faces["yellow"].squares[1][0].col2]]
+
+            if sides[1] == right[sides[0]]:
+                self.cross_algo2("green")
+            elif sides[2] == right[sides[1]]:
+                self.cross_algo2("orange")
+            elif sides[3] == right[sides[2]]:
+                self.cross_algo2("blue")
+            elif sides[0] == right[sides[3]]:
+                self.cross_algo2("red")
+
+        m = self.rot_calc_edge("yellow", sides[0], "blue")
+        for i in range(m):
+            self.move("yellow")
+
+    def cross_algo(self, col):
+        right = {"green" : "orange", "orange" : "blue", "blue" : "red", "red" : "green"}
+        self.move(col)
+        self.move(right[col])
+        self.move("yellow")
+        for i in range(3):
+            self.move(right[col])
+        for i in range(3):
+            self.move("yellow")
+        for i in range(3):
+            self.move(col)
+
+    def cross_algo2(self, col):
+        right = {"green" : "orange", "orange" : "blue", "blue" : "red", "red" : "green"}
+        self.move(right[col])
+        self.move("yellow")
+        self.move("yellow")
+        for i in range(3):
+            self.move(right[col])
+        for i in range(3):
+            self.move("yellow")
+        self.move(right[col])
+        for i in range(3):
+            self.move("yellow")
+        for i in range(3):
+            self.move(right[col])
+
     def event(self, event):
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -926,6 +1018,8 @@ def main():
     #solver.white_cross()
     #solver.insert_corners()
     #solver.insert_other_edges()
+
+    solver.yellow_cross()
     
     solver.short()
 
