@@ -18,29 +18,30 @@ white = Model.white
 
 face_names = ["white", "green", "orange", "blue", "red", "yellow"]
 face_names2 = {white : "white", green : "green", orange : "orange", blue : "blue", red : "red", yellow : "yellow"}
+face_names3 = {"white" : white, "green" : green, "orange" : orange, "blue" : blue, "red" : red, "yellow" : yellow}
 console_to_open_GL = {1 : (0, 0, 1), 2 : (0, 1, 0), 4 : (1, 0, 0), 13 : (1, 0.5, 0), 14 : (1, 1, 0), 15 : (1, 1, 1)}
 
 screen = terminal.get_terminal(conEmu=False)
 
 now = """
-bgg
-wwy
-oor
-gyg
-wgr
-rrb
-wry
-gob
-bwy
-wyo
-rbo
 www
-ybr
-yrg
-obo
-bby
-gyo
-rog
+www
+www
+ggg
+ggg
+bor
+ooo
+ooo
+gyr
+bbb
+bbb
+byo
+rrr
+rrr
+ygy
+yyg
+ryy
+ybo
 """
 
 class Rotation:
@@ -792,6 +793,73 @@ class Solver():
         self.insert_corner(blue, orange, protect)
         protect.append(["blue", "orange"])
 
+    def insert_other_edge(self, col1, col2):
+        pos = self.getEdge(col1, col2)
+        
+        if "yellow" in pos:
+            if pos[1] == "yellow":
+                t = [col1, pos[0]]
+                b = [col2, pos[1]]
+            else:
+                t = [col2, pos[1]]
+                b = [col1, pos[0]]
+
+            m = self.rot_calc_edge("yellow", t[1], face_names2[t[0]])
+            
+            for i in range(m):
+                self.move("yellow")
+
+            if self.rot_calc_edge("yellow", face_names2[t[0]], face_names2[b[0]]) == 1:
+                for i in range(3):
+                    self.move("yellow")
+                for i in range(3):
+                    self.move(face_names2[b[0]])
+                self.move("yellow")
+                self.move(face_names2[b[0]])
+            else:
+                self.move("yellow")
+                self.move(face_names2[b[0]])
+                for i in range(3):
+                    self.move("yellow")
+                for i in range(3):
+                    self.move(face_names2[b[0]])
+
+            protect = [["green", "red"], ["red", "blue"], ["blue", "orange"], ["orange", "green"]]
+            if [face_names2[col1], face_names2[col2]] in protect:
+                protect.remove([face_names2[col1], face_names2[col2]])
+            else:
+                protect.remove([face_names2[col2], face_names2[col1]])
+            self.insert_corner(col1, col2, protect)
+
+        else:
+            if (pos[0] == face_names2[col1] and pos[1] == face_names2[col2]) or (pos[0] == face_names2[col2] and pos[1] == face_names2[col1]):
+                return
+            if self.rot_calc_edge("yellow", pos[0], pos[1]) == 1:
+                f = pos[1]
+            else:
+                f = pos[0]
+            
+            for i in range(3):
+                self.move(f)
+            self.move("yellow")
+            self.move(f)
+
+            protect = [["green", "red"], ["red", "blue"], ["blue", "orange"], ["orange", "green"]]
+            if [pos[0], pos[1]] in protect:
+                protect.remove([pos[0], pos[1]])
+            else:
+                protect.remove([pos[1], pos[0]])
+
+            self.insert_corner(face_names3[pos[0]], face_names3[pos[1]], protect)
+
+            self.insert_other_edge(col1, col2)
+
+    def insert_other_edges(self):
+        self.insert_other_edge(blue, orange)
+        self.insert_other_edge(red, green)
+        self.insert_other_edge(green, orange)
+        self.insert_other_edge(red, blue)
+
     def event(self, event):
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -810,8 +878,6 @@ class Solver():
             elif event.key == pygame.K_DOWN:
                 self.up = -1
                 self.left = 0
-            elif event.key == pygame.K_SPACE:
-                print(self.notes())
 
             if event.key == pygame.K_d and self.i < self.l:
                 self.m = True
@@ -837,6 +903,7 @@ class Solver():
         return new_l[dir]
 
     def start_loop(self):
+        self.short()
         self.l = len(self.moves)
         self.paint(now)
 
@@ -856,13 +923,11 @@ def main():
 
     solver.paint(now)
 
-    solver.white_cross()
-    solver.insert_corners()
+    #solver.white_cross()
+    #solver.insert_corners()
+    #solver.insert_other_edges()
     
     solver.short()
-    
-    
-    solver.paint(now)
 
     solver.start_loop()
     
