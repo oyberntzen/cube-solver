@@ -24,24 +24,24 @@ console_to_open_GL = {1 : (0, 0, 1), 2 : (0, 1, 0), 4 : (1, 0, 0), 13 : (1, 0.5,
 screen = terminal.get_terminal(conEmu=False)
 
 now = """
-www
-www
-www
-ggg
-ggg
-ybo
-ooo
-ooo
-yob
-bbb
-bbb
-ygr
-rrr
-rrr
+oob
+owr
+brb
+ygw
+ygb
+ogr
+wbr
+roo
+roy
+ogg
+ybw
+wyw
+rby
+wrb
+ygb
+gyg
+wyw
 gro
-ryy
-yyy
-gyb
 """
 
 class Rotation:
@@ -309,27 +309,28 @@ class Solver():
                 self.face = self.trans_new(self.face, temp, 1)[0]
 
     def update(self):
+        speed = 10
         if self.m:
             if not self.r:
                 self.tripl = False
                 if not self.back:
                     if self.i + 2 < self.l:
                         if self.moves[self.i] == self.moves[self.i + 1] and self.moves[self.i] == self.moves[self.i + 2]:
-                            self.r = Rotation(self.moves[self.i], -1)
+                            self.r = Rotation(self.moves[self.i], -speed)
                             self.tripl = True
                         else:
-                            self.r = Rotation(self.moves[self.i], 1)
+                            self.r = Rotation(self.moves[self.i], speed)
                     else:
-                        self.r = Rotation(self.moves[self.i], 1)
+                        self.r = Rotation(self.moves[self.i], speed)
                 else:
                     if self.i - 3 >= 0:
                         if self.moves[self.i - 1] == self.moves[self.i - 2] and self.moves[self.i - 1] == self.moves[self.i - 3]:
-                            self.r = Rotation(self.moves[self.i - 1], 1)
+                            self.r = Rotation(self.moves[self.i - 1], speed)
                             self.tripl = True
                         else:
-                            self.r = Rotation(self.moves[self.i - 1], -1)
+                            self.r = Rotation(self.moves[self.i - 1], -speed)
                     else:
-                        self.r = Rotation(self.moves[self.i - 1], -1)
+                        self.r = Rotation(self.moves[self.i - 1], -speed)
             
             self.r.rotate()
             if self.r: 
@@ -681,6 +682,9 @@ class Solver():
         right = { "green" : "red", "red" : "blue", "blue" : "orange", "orange" : "green" }
         left = { "green" : "orange", "red" : "green", "blue" : "red", "orange" : "blue" }
 
+        if pos[2] == "white":
+            return
+
         if pos[0] == "white" or pos[1] == "white":
             if pos[0] == "white":
                 side = pos[1]
@@ -921,6 +925,11 @@ class Solver():
             elif sides[0] == right[sides[3]]:
                 self.cross_algo2("red")
 
+        sides = [face_names2[self.cube.faces["yellow"].squares[2][1].col2],
+                 face_names2[self.cube.faces["yellow"].squares[1][2].col2],
+                 face_names2[self.cube.faces["yellow"].squares[0][1].col2],
+                 face_names2[self.cube.faces["yellow"].squares[1][0].col2]]
+
         m = self.rot_calc_edge("yellow", sides[0], "blue")
         for i in range(m):
             self.move("yellow")
@@ -951,6 +960,169 @@ class Solver():
             self.move("yellow")
         for i in range(3):
             self.move(right[col])
+
+    def last_corners(self):
+        correct = [self.check_corner(green, orange),
+                   self.check_corner(orange, blue),
+                   self.check_corner(blue, red),
+                   self.check_corner(red, green)]
+
+        if not True in correct:
+            self.corner_algo("green")
+
+        correct = [self.check_corner(green, orange),
+                   self.check_corner(orange, blue),
+                   self.check_corner(blue, red),
+                   self.check_corner(red, green)]
+
+        all = ["green", "orange", "blue", "red"]
+
+        if not (correct[0] and correct[1] and correct[2] and correct[3]):
+            index = 0
+            for i in range(4):
+                if correct[i]:
+                    index = i
+                    break
+            self.corner_algo(all[index])
+
+        orient = [self.check_corner2(green, orange),
+                  self.check_corner2(orange, blue),
+                  self.check_corner2(blue, red),
+                  self.check_corner2(red, green)]
+        done = 0
+        for i in orient:
+            if i == "yellow":
+                done += 1
+
+        if done == 1:
+            if orient[0] == "yellow":
+                self.corner_algo2("blue")
+            elif orient[1] == "yellow":
+                self.corner_algo2("red")
+            elif orient[2] == "yellow":
+                self.corner_algo2("green")
+            elif orient[3] == "yellow":
+                self.corner_algo2("orange")
+
+        orient = [self.check_corner2(green, orange),
+                  self.check_corner2(orange, blue),
+                  self.check_corner2(blue, red),
+                  self.check_corner2(red, green)]
+        done = 0
+        for i in orient:
+            if i == "yellow":
+                done += 1
+
+        if done == 4:
+            if orient[0] == orient[1]:
+                self.corner_algo2("green")
+            elif orient[1] == orient[2]:
+                self.corner_algo2("orange")
+            elif orient[2] == orient[3]:
+                self.corner_algo2("blue")
+            elif orient[3] == orient[0]:
+                self.corner_algo2("red")
+
+        orient = [self.check_corner2(green, orange),
+                  self.check_corner2(orange, blue),
+                  self.check_corner2(blue, red),
+                  self.check_corner2(red, green)]
+        done = 0
+        for i in orient:
+            if i == "yellow":
+                done += 1
+
+        if done == 2:
+            if orient[0] == "green" and orient[2] == "red":
+                self.corner_algo2("blue")
+            elif orient[0] == "orange" and orient[2] == "blue":
+                self.corner_algo2("green")
+            elif orient[1] == "orange" and orient[3] == "green":
+                self.corner_algo2("red")
+            elif orient[1] == "blue" and orient[3] == "red":
+                self.corner_algo2("orange")
+            elif orient[0] == "green" and orient[1] == "blue":
+                self.corner_algo2("green")
+            elif orient[1] == "orange" and orient[2] == "red":
+                self.corner_algo2("orange")
+            elif orient[2] == "blue" and orient[3] == "green":
+                self.corner_algo2("blue")
+            elif orient[3] == "red" and orient[0] == "green":
+                self.corner_algo2("red")
+
+            orient = [self.check_corner2(green, orange),
+                      self.check_corner2(orange, blue),
+                      self.check_corner2(blue, red),
+                      self.check_corner2(red, green)]
+            done = 0
+            for i in orient:
+                if i == "yellow":
+                    done += 1
+
+            if orient[0] == orient[1] and not orient[0] == "yellow":
+                self.corner_algo2("green")
+            elif orient[1] == orient[2] and not orient[1] == "yellow":
+                self.corner_algo2("orange")
+            elif orient[2] == orient[3] and not orient[2] == "yellow":
+                self.corner_algo2("blue")
+            elif orient[3] == orient[0] and not orient[3] == "yellow":
+                self.corner_algo2("red")
+
+    def check_corner(self, col1, col2):
+        pos = self.getCorner(col1, col2, yellow)
+        
+        if face_names2[col1] in pos and face_names2[col2] in pos:
+            return True
+        return False
+
+    def check_corner2(self, col1, col2):
+        pos = self.getCorner(col1, col2, yellow)
+        return pos[2]
+
+    def corner_algo(self, col):
+        right = {"green" : "orange", "orange" : "blue", "blue" : "red", "red" : "green"}
+        left = {"green" : "red", "red" : "blue", "blue" : "orange", "orange" : "green"}
+
+        for i in range(3):
+            self.move(left[col])
+        self.move("yellow")
+        self.move(right[col])
+        for i in range(3):
+            self.move("yellow")
+        self.move(left[col])
+        self.move("yellow")
+        for i in range(3):
+            self.move(right[col])
+        for i in range(3):
+            self.move("yellow")
+
+    def corner_algo2(self, col):
+        right = {"green" : "orange", "orange" : "blue", "blue" : "red", "red" : "green"}
+        left = {"green" : "red", "red" : "blue", "blue" : "orange", "orange" : "green"}
+
+        self.move(right[col])
+        self.move("yellow")
+        self.move("yellow")
+        for i in range(3):
+            self.move(right[col])
+        for i in range(3):
+            self.move("yellow")
+        self.move(right[col])
+        for i in range(3):
+            self.move("yellow")
+        for i in range(3):
+            self.move(right[col])
+
+        for i in range(3):
+            self.move(left[col])
+        self.move("yellow")
+        self.move("yellow")
+        self.move(left[col])
+        self.move("yellow")
+        for i in range(3):
+            self.move(left[col])
+        self.move("yellow")
+        self.move(left[col])
 
     def event(self, event):
         if event.type == pygame.QUIT:
@@ -1015,14 +1187,15 @@ def main():
 
     solver.paint(now)
 
-    #solver.white_cross()
-    #solver.insert_corners()
-    #solver.insert_other_edges()
-
+    solver.white_cross()
+    solver.insert_corners()
+    solver.insert_other_edges()
     solver.yellow_cross()
+
+    solver.last_corners()
     
     solver.short()
-
+    
     solver.start_loop()
     
     while True:
