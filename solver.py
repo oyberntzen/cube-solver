@@ -24,26 +24,7 @@ console_to_open_GL = {1 : (0, 0, 1), 2 : (0, 1, 0), 4 : (1, 0, 0), 13 : (1, 0.5,
 
 screen = terminal.get_terminal(conEmu=False)
 
-now = """
-obr
-ywo
-yow
-rgr
-ggb
-bry
-yob
-wor
-wyo
-yyb
-rbo
-ggg
-bbg
-wry
-oww
-wbg
-gyr
-rwo
-"""
+now = [[[4, 15, 1], [14, 15, 15], [4, 2, 13]], [[1, 13, 14], [13, 2, 4], [14, 15, 4]], [[2, 1, 14], [2, 13, 14], [13, 4, 13]], [[4, 13, 15], [13, 1, 14], [15, 4, 15]], [[2, 1, 15], [2, 4, 1], [14, 4, 13]], [[1, 2, 2], [14, 14, 15], [1, 1, 2]]]
 
 class Rotation:
     """Manage rotation of a given face color"""
@@ -225,7 +206,7 @@ class Solver():
             elif len(i) == 3:
                 notation.append(i[0][0].upper() + "`")
 
-        return " ".join(notation)
+        return notation
 
     def Open_GL_draw(self, surface):
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
@@ -760,7 +741,7 @@ class Solver():
                     redo.append(pos[0])
 
         pos = self.getEdge(white, color)
-        
+
         move = self.rot_calc_edge(pos[1], pos[0], "yellow")
         
 
@@ -1145,7 +1126,7 @@ class Solver():
             if i == "yellow":
                 done += 1
 
-        if done == 4:
+        if done == 0:
             if orient[0] == orient[1]:
                 self.corner_algo2("green")
             elif orient[1] == orient[2]:
@@ -1179,7 +1160,7 @@ class Solver():
                 self.corner_algo2("orange")
             elif orient[2] == "blue" and orient[3] == "green":
                 self.corner_algo2("blue")
-            elif orient[3] == "red" and orient[0] == "green":
+            elif orient[3] == "red" and orient[0] == "orange":
                 self.corner_algo2("red")
 
             orient = [self.check_corner2(green, orange),
@@ -1345,6 +1326,8 @@ class Solver():
     
         self.short()
 
+        print(len(self.notes()), "moves.", self.notes())
+
     def shift_right(self):
         tiles = { (0, 0) : (0, 1), (0, 1) : (0, 2), (0, 2) : (1, 0), (1, 0) : (1, 2), (1, 2) : (2, 0), (2, 0) : (2, 1), (2, 1) : (2, 2), (2, 2) : "last" }
         now = tiles[(self.cursor[1], self.cursor[2])]
@@ -1371,7 +1354,6 @@ class Solver():
                 self.solve()
                 self.l = len(self.moves)
                 self.paint2(self.now)
-                print(self.now)
         else:
             self.cursor[1] = now[0]
             self.cursor[2] = now[1]
@@ -1399,14 +1381,23 @@ class Solver():
         else:
             self.cursor[1] = now[0]
             self.cursor[2] = now[1]
+
+    def is_solved(self):
+        colors = [white, green, orange, blue, red, yellow]
+        solved = True
+
+        for i in range(len(self.cube.faces)):
+            for j in list(self.cube.faces.values())[i].squares:
+                for k in j:
+                    if not k.col1 == colors[i]:
+                        solved = False
+                        break
+
+        return solved
         
 def main():
     cube = Model.Cube()
     solver = Solver(cube)
-    #solver.paint(now.split())
-    #solver.solve()
-    #solver.paint(now)
-    #solver.l = len(solver.moves)
 
     pygame.init()
     size = (800,600)
