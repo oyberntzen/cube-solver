@@ -67,8 +67,6 @@ class Cube():
     def paint(self, face, new):
         f = self.faces[face]
 
-        
-
         for y in range(len(f.squares)):
             row = f.squares[y]
             for x in range(len(row)):
@@ -82,9 +80,9 @@ class Cube():
 class Face():
     def __init__(self, col, top, rigth, bottom, left):
         self.squares = [
-            (Corner(col, top, left),    Edge(col, top),    Corner(col, top, rigth)   ),
-            (Edge(col, left),           Center(col),       Edge(col, rigth)          ),
-            (Corner(col, bottom, left), Edge(col, bottom), Corner(col, bottom, rigth))
+            [Corner(col, top, left),    Edge(col, top),    Corner(col, top, rigth)   ],
+            [Edge(col, left),           Center(col),       Edge(col, rigth)          ],
+            [Corner(col, bottom, left), Edge(col, bottom), Corner(col, bottom, rigth)]
             ]
 
         self.top = top

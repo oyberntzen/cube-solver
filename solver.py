@@ -6,6 +6,7 @@ from pygame.locals import *
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from OpenGL.GLUT import *
 
 import random
 
@@ -24,24 +25,24 @@ console_to_open_GL = {1 : (0, 0, 1), 2 : (0, 1, 0), 4 : (1, 0, 0), 13 : (1, 0.5,
 screen = terminal.get_terminal(conEmu=False)
 
 now = """
-oob
-owr
-brb
-ygw
-ygb
-ogr
-wbr
-roo
-roy
-ogg
-ybw
-wyw
-rby
-wrb
-ygb
-gyg
-wyw
-gro
+obr
+ywo
+yow
+rgr
+ggb
+bry
+yob
+wor
+wyo
+yyb
+rbo
+ggg
+bbg
+wry
+oww
+wbg
+gyr
+rwo
 """
 
 class Rotation:
@@ -164,6 +165,18 @@ class Solver():
         self.r = None
         self.l = 0
 
+        self.start = True
+        self.cursor = ["white", 0, 0]
+        self.x_rot = 90
+        self.y_rot = 0
+
+        self.now = [[[15 for i in range(3)] for i in range(3)], 
+                    [[2 for i in range(3)] for i in range(3)], 
+                    [[13 for i in range(3)] for i in range(3)], 
+                    [[1 for i in range(3)] for i in range(3)], 
+                    [[4 for i in range(3)] for i in range(3)], 
+                    [[14 for i in range(3)] for i in range(3)]]
+
     def setMode(self, mode):
         self.moveMode = mode
 
@@ -214,35 +227,10 @@ class Solver():
 
         return " ".join(notation)
 
-    def draw(self):
-        x = 0
-        y = 0
-        for i in self.cube.faces.items():
-            h = i[1]
-            for j in h.squares:
-                for l in j:
-                    screen.set_color(0, l.col1)
-                    screen.print_at(x, y, "  ")
-                    x += 2
-
-                y += 1
-                x = 0
-            y += 2
-        screen.set_color(15, 0)
-
-    def Open_GL_draw(self):
+    def Open_GL_draw(self, surface):
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
-        self.DrawFaceFront(1.5, self.cube.faces["green"].squares, "green", self.r)
-        self.DrawFaceBack(-1.5, self.cube.faces["blue"].squares, "blue", self.r)
-
-        self.DrawFaceLeft(-1.5, self.cube.faces["orange"].squares, "orange", self.r)
-        self.DrawFaceRight(1.5, self.cube.faces["red"].squares, "red", self.r)
-
-        self.DrawFaceTop(1.5, self.cube.faces["white"].squares, "white", self.r)
-        self.DrawFaceBottom(-1.5, self.cube.faces["yellow"].squares, "yellow", self.r)
-
-        if not (self.up == 0 and self.left == 0):
+        if not (self.up == 0 and self.left == 0) and not self.start:
 
             rotation = [
                 [
@@ -308,6 +296,126 @@ class Solver():
                 self.rot = self.trans_new(self.face, self.rot, 1)[1]
                 self.face = self.trans_new(self.face, temp, 1)[0]
 
+        if self.start:
+            glPushMatrix()
+            if not (self.x_rot == 0 and self.y_rot == 0):
+                glRotatef(self.x_rot, 1, 0, 0)
+                glRotatef(self.y_rot, 0, 1, 0)
+
+        self.DrawFaceFront(1.5, self.cube.faces["green"].squares, "green", self.r)
+        self.DrawFaceBack(-1.5, self.cube.faces["blue"].squares, "blue", self.r)
+
+        self.DrawFaceLeft(-1.5, self.cube.faces["orange"].squares, "orange", self.r)
+        self.DrawFaceRight(1.5, self.cube.faces["red"].squares, "red", self.r)
+
+        self.DrawFaceTop(1.5, self.cube.faces["white"].squares, "white", self.r)
+        self.DrawFaceBottom(-1.5, self.cube.faces["yellow"].squares, "yellow", self.r)
+
+        if self.start:
+            glPopMatrix()
+
+            glBegin(GL_POLYGON)
+            glColor3f(1, 1, 1)
+            glVertex2fv((-5.5, 3.6))
+            glVertex2fv((-5.5, 4.1))
+            glVertex2fv((-5, 4.1))
+            glVertex2fv((-5, 3.6))
+            glEnd()
+
+            glBegin(GL_POLYGON)
+            glColor3f(0, 1, 0)
+            glVertex2fv((-5, 3.6))
+            glVertex2fv((-5, 4.1))
+            glVertex2fv((-4.5, 4.1))
+            glVertex2fv((-4.5, 3.6))
+            glEnd()
+
+            glBegin(GL_POLYGON)
+            glColor3f(1, 0.5, 0)
+            glVertex2fv((-4.5, 3.6))
+            glVertex2fv((-4.5, 4.1))
+            glVertex2fv((-4, 4.1))
+            glVertex2fv((-4, 3.6))
+            glEnd()
+
+            glBegin(GL_POLYGON)
+            glColor3f(0, 0, 1)
+            glVertex2fv((-4, 3.6))
+            glVertex2fv((-4, 4.1))
+            glVertex2fv((-3.5, 4.1))
+            glVertex2fv((-3.5, 3.6))
+            glEnd()
+
+            glBegin(GL_POLYGON)
+            glColor3f(1, 0, 0)
+            glVertex2fv((-3.5, 3.6))
+            glVertex2fv((-3.5, 4.1))
+            glVertex2fv((-3, 4.1))
+            glVertex2fv((-3, 3.6))
+            glEnd()
+
+            glBegin(GL_POLYGON)
+            glColor3f(1, 1, 0)
+            glVertex2fv((-3, 3.6))
+            glVertex2fv((-3, 4.1))
+            glVertex2fv((-2.5, 4.1))
+            glVertex2fv((-2.5, 3.6))
+            glEnd()
+
+
+            glColor3f(1, 1, 1)
+            glBegin(GL_LINES)
+            glVertex2fv((-5.25, 3.5))
+            glVertex2fv((-5.25, 3))
+            glEnd()
+
+            glBegin(GL_LINE_STRIP)
+            glVertex2fv((-4.875, 3.5))
+            glVertex2fv((-4.625, 3.5))
+            glVertex2fv((-4.625, 3.25))
+            glVertex2fv((-4.875, 3.25))
+            glVertex2fv((-4.875, 3.25))
+            glVertex2fv((-4.875, 3))
+            glVertex2fv((-4.625, 3))
+            glEnd()
+
+            glBegin(GL_LINE_STRIP)
+            glVertex2fv((-4.375, 3.5))
+            glVertex2fv((-4.125, 3.5))
+            glVertex2fv((-4.125, 3.25))
+            glVertex2fv((-4.375, 3.25))
+            glVertex2fv((-4.125, 3.25))
+            glVertex2fv((-4.125, 3))
+            glVertex2fv((-4.375, 3))
+            glEnd()
+
+            glBegin(GL_LINE_STRIP)
+            glVertex2fv((-3.875, 3.5))
+            glVertex2fv((-3.875, 3.25))
+            glVertex2fv((-3.625, 3.25))
+            glVertex2fv((-3.625, 3.5))
+            glVertex2fv((-3.625, 3))
+            glEnd()
+
+            glBegin(GL_LINE_STRIP)
+            glVertex2fv((-3.125, 3.5))
+            glVertex2fv((-3.375, 3.5))
+            glVertex2fv((-3.375, 3.25))
+            glVertex2fv((-3.125, 3.25))
+            glVertex2fv((-3.125, 3))
+            glVertex2fv((-3.375, 3))
+            glEnd()
+
+            glBegin(GL_LINE_STRIP)
+            glVertex2fv((-2.625, 3.5))
+            glVertex2fv((-2.875, 3.5))
+            glVertex2fv((-2.875, 3.25))
+            glVertex2fv((-2.625, 3.25))
+            glVertex2fv((-2.625, 3))
+            glVertex2fv((-2.875, 3))
+            glVertex2fv((-2.875, 3.25))
+            glEnd()
+
     def update(self):
         speed = 10
         if self.m:
@@ -359,9 +467,9 @@ class Solver():
 
     def DrawFaceFront(self, z, tiles, facecolor, rotation):
         colors = []
-        for row in tiles:
-            for tile in row:
-                colors.append(tile.col1)
+        for row in range(len(tiles)):
+            for tile in range(len(tiles[row])):
+                colors.append([tiles[row][tile].col1, row, tile])
 
         tilenum = 0
         for ycorner in (0.5, -0.5, -1.5):
@@ -371,7 +479,10 @@ class Solver():
                         glPushMatrix()
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
-                glColor3f(*console_to_open_GL[colors[tilenum]])
+                if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
+                    glColor3f(0, 0.7, 0)
+                else:
+                    glColor3f(*console_to_open_GL[colors[tilenum][0]])
                 glVertex3fv((xcorner+self.offset, ycorner+self.offset, z))
                 glVertex3fv((xcorner+(1-self.offset), ycorner+self.offset, z))
                 glVertex3fv((xcorner+(1-self.offset), ycorner+(1-self.offset), z))
@@ -384,9 +495,9 @@ class Solver():
                 
     def DrawFaceBack(self, z, tiles, facecolor, rotation):
         colors = []
-        for row in tiles:
-            for tile in row:
-                colors.append(tile.col1)
+        for row in range(len(tiles)):
+            for tile in range(len(tiles[row])):
+                colors.append([tiles[row][tile].col1, row, tile])
 
         tilenum = 0
         for ycorner in (0.5, -0.5, -1.5):
@@ -396,7 +507,10 @@ class Solver():
                         glPushMatrix()
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
-                glColor3f(*console_to_open_GL[colors[tilenum]])
+                if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
+                    glColor3f(0, 0, 0.7)
+                else:
+                    glColor3f(*console_to_open_GL[colors[tilenum][0]])
                 glVertex3fv((xcorner+self.offset, ycorner+self.offset, z))
                 glVertex3fv((xcorner+(1-self.offset), ycorner+self.offset, z))
                 glVertex3fv((xcorner+(1-self.offset), ycorner+(1-self.offset), z))
@@ -410,9 +524,9 @@ class Solver():
     # Function for generating left and right faces (x is fixed)
     def DrawFaceLeft(self, x, tiles, facecolor, rotation):
         colors = []
-        for row in tiles:
-            for tile in row:
-                colors.append(tile.col1)
+        for row in range(len(tiles)):
+            for tile in range(len(tiles[row])):
+                colors.append([tiles[row][tile].col1, row, tile])
 
         tilenum = 0
         for ycorner in (0.5, -0.5, -1.5):
@@ -422,7 +536,10 @@ class Solver():
                         glPushMatrix()
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
-                glColor3f(*console_to_open_GL[colors[tilenum]])
+                if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
+                    glColor3f(0.7, 0.3, 0)
+                else:
+                    glColor3f(*console_to_open_GL[colors[tilenum][0]])
                 glVertex3fv((x, ycorner+self.offset, zcorner+self.offset))
                 glVertex3fv((x, ycorner+self.offset, zcorner+(1-self.offset)))
                 glVertex3fv((x, ycorner+(1-self.offset), zcorner+(1-self.offset)))
@@ -435,9 +552,9 @@ class Solver():
 
     def DrawFaceRight(self, x, tiles, facecolor, rotation):
         colors = []
-        for row in tiles:
-            for tile in row:
-                colors.append(tile.col1)
+        for row in range(len(tiles)):
+            for tile in range(len(tiles[row])):
+                colors.append([tiles[row][tile].col1, row, tile])
 
         tilenum = 0
         for ycorner in (0.5, -0.5, -1.5):
@@ -447,7 +564,10 @@ class Solver():
                         glPushMatrix()
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
-                glColor3f(*console_to_open_GL[colors[tilenum]])
+                if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
+                    glColor3f(0.7, 0, 0)
+                else:
+                    glColor3f(*console_to_open_GL[colors[tilenum][0]])
                 glVertex3fv((x, ycorner+self.offset, zcorner+self.offset))
                 glVertex3fv((x, ycorner+self.offset, zcorner+(1-self.offset)))
                 glVertex3fv((x, ycorner+(1-self.offset), zcorner+(1-self.offset)))
@@ -461,9 +581,9 @@ class Solver():
     # Function for generating top and bottom faces (y is fixed)
     def DrawFaceTop(self, y, tiles, facecolor, rotation):
         colors = []
-        for row in tiles:
-            for tile in row:
-                colors.append(tile.col1)
+        for row in range(len(tiles)):
+            for tile in range(len(tiles[row])):
+                colors.append([tiles[row][tile].col1, row, tile])
 
         tilenum = 0
         for zcorner in (-1.5, -0.5, 0.5):
@@ -473,7 +593,10 @@ class Solver():
                         glPushMatrix()
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
-                glColor3f(*console_to_open_GL[colors[tilenum]])
+                if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
+                    glColor3f(0.7, 0.7, 0.7)
+                else:
+                    glColor3f(*console_to_open_GL[colors[tilenum][0]])
                 glVertex3fv((xcorner+self.offset, y, zcorner+self.offset))
                 glVertex3fv((xcorner+(1-self.offset), y, zcorner+self.offset))
                 glVertex3fv((xcorner+(1-self.offset), y, zcorner+(1-self.offset)))
@@ -486,9 +609,9 @@ class Solver():
 
     def DrawFaceBottom(self, y, tiles, facecolor, rotation):
         colors = []
-        for row in tiles:
-            for tile in row:
-                colors.append(tile.col1)
+        for row in range(len(tiles)):
+            for tile in range(len(tiles[row])):
+                colors.append([tiles[row][tile].col1, row, tile])
 
         tilenum = 0
         for zcorner in (0.5, -0.5, -1.5):
@@ -498,7 +621,10 @@ class Solver():
                         glPushMatrix()
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
-                glColor3f(*console_to_open_GL[colors[tilenum]])
+                if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
+                    glColor3f(0.7, 0.7, 0)
+                else:
+                    glColor3f(*console_to_open_GL[colors[tilenum][0]])
                 glVertex3fv((xcorner+self.offset, y, zcorner+self.offset))
                 glVertex3fv((xcorner+(1-self.offset), y, zcorner+self.offset))
                 glVertex3fv((xcorner+(1-self.offset), y, zcorner+(1-self.offset)))
@@ -509,16 +635,12 @@ class Solver():
                         glPopMatrix()
                 tilenum += 1
 
-    def paint(self, c):
-        lines = now.split()
-
+    def paint(self, lines):
         faces = [[], [], [], [], [], []]
 
-        j = 0
         for i in range(len(faces)):
             face = faces[i]
-            j = i * 2
-            j += i
+            j = i * 3
 
             face.append(lines[j])
             face.append(lines[j+1])
@@ -533,7 +655,6 @@ class Solver():
             new_f.append(new)
 
         faces = new_f
-        
 
         new_f = []
         for i in faces:
@@ -541,6 +662,7 @@ class Solver():
             for j in i:
                 n = []
                 for k in j:
+                    
                     if k == "w":
                         k = white
                     elif k == "g":
@@ -553,12 +675,16 @@ class Solver():
                         k = red
                     elif k == "y":
                         k = yellow
-
                     n.append(k)
                 new.append(n)
             new_f.append(new)
         faces = new_f
 
+        for i in range(len(faces)):
+            face = faces[i]
+            self.cube.paint(face_names[i], face)
+
+    def paint2(self, faces):
         for i in range(len(faces)):
             face = faces[i]
             self.cube.paint(face_names[i], face)
@@ -682,9 +808,6 @@ class Solver():
         right = { "green" : "red", "red" : "blue", "blue" : "orange", "orange" : "green" }
         left = { "green" : "orange", "red" : "green", "blue" : "red", "orange" : "blue" }
 
-        if pos[2] == "white":
-            return
-
         if pos[0] == "white" or pos[1] == "white":
             if pos[0] == "white":
                 side = pos[1]
@@ -694,17 +817,25 @@ class Solver():
             if right[pos[2]] == side:
                 self.move(pos[2])
                 self.move("yellow")
-                self.move(pos[2])
-                self.move(pos[2])
-                self.move(pos[2])
+                for i in range(3):
+                    self.move(pos[2])
             else:
+                for i in range(3):
+                    self.move(pos[2])
+                for i in range(3):
+                    self.move("yellow")
                 self.move(pos[2])
-                self.move(pos[2])
-                self.move(pos[2])
+
+        if pos[2] == "white" and not ((col1 == pos[0] and col2 == pos[1]) or (col1 == pos[1] and col2 == pos[2])):
+            if right[pos[0]] == pos[1]:
+                side = pos[1]
+            else:
+                side = pos[0]
+            for i in range(3):
+                self.move(side)
+            for i in range(3):
                 self.move("yellow")
-                self.move("yellow")
-                self.move("yellow")
-                self.move(pos[2])
+            self.move(side)
 
         if pos[2] == "yellow":
             
@@ -836,7 +967,7 @@ class Solver():
             self.insert_corner(col1, col2, protect)
 
         else:
-            if (pos[0] == face_names2[col1] and pos[1] == face_names2[col2]) or (pos[0] == face_names2[col2] and pos[1] == face_names2[col1]):
+            if (pos[0] == face_names2[col1] and pos[1] == face_names2[col2]):
                 return
             if self.rot_calc_edge("yellow", pos[0], pos[1]) == 1:
                 f = pos[1]
@@ -930,7 +1061,7 @@ class Solver():
                  face_names2[self.cube.faces["yellow"].squares[0][1].col2],
                  face_names2[self.cube.faces["yellow"].squares[1][0].col2]]
 
-        m = self.rot_calc_edge("yellow", sides[0], "blue")
+        m = self.rot_calc_edge("yellow", "blue", sides[0])
         for i in range(m):
             self.move("yellow")
 
@@ -970,20 +1101,21 @@ class Solver():
         if not True in correct:
             self.corner_algo("green")
 
-        correct = [self.check_corner(green, orange),
-                   self.check_corner(orange, blue),
-                   self.check_corner(blue, red),
-                   self.check_corner(red, green)]
+        for i in range(2):
+            correct = [self.check_corner(green, orange),
+                       self.check_corner(orange, blue),
+                       self.check_corner(blue, red), 
+                       self.check_corner(red, green)]
 
-        all = ["green", "orange", "blue", "red"]
+            all = ["green", "orange", "blue", "red"]
 
-        if not (correct[0] and correct[1] and correct[2] and correct[3]):
-            index = 0
-            for i in range(4):
-                if correct[i]:
-                    index = i
-                    break
-            self.corner_algo(all[index])
+            if not (correct[0] and correct[1] and correct[2] and correct[3]):
+                index = 0
+                for i in range(4):
+                    if correct[i]:
+                        index = i
+                        break
+                self.corner_algo(all[index])
 
         orient = [self.check_corner2(green, orange),
                   self.check_corner2(orange, blue),
@@ -1131,17 +1263,55 @@ class Solver():
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                self.left = -1
-                self.up = 0
+                if self.start:
+                    self.shift_right()
+                else:
+                    self.left = -1
+                    self.up = 0
             elif event.key == pygame.K_LEFT:
-                self.left = 1
-                self.up = 0
+                if self.start:
+                    self.shift_left()
+                else:
+                    self.left = 1
+                    self.up = 0
             elif event.key == pygame.K_UP:
                 self.up = 1
                 self.left = 0
             elif event.key == pygame.K_DOWN:
                 self.up = -1
                 self.left = 0
+
+            num = { "white" : 0, "green" : 1, "orange" : 2, "blue" : 3, "red" : 4, "yellow" : 5 }
+            if event.key == pygame.K_1:
+                self.cube.faces[self.cursor[0]].squares[self.cursor[1]][self.cursor[2]].col1 = white
+                self.cube.update(self.cursor[0])
+                self.now[num[self.cursor[0]]][self.cursor[1]][self.cursor[2]] = white
+                self.shift_right()
+            elif event.key == pygame.K_2:
+                self.cube.faces[self.cursor[0]].squares[self.cursor[1]][self.cursor[2]].col1 = green
+                self.cube.update(self.cursor[0])
+                self.now[num[self.cursor[0]]][self.cursor[1]][self.cursor[2]] = green
+                self.shift_right()
+            elif event.key == pygame.K_3:
+                self.cube.faces[self.cursor[0]].squares[self.cursor[1]][self.cursor[2]].col1 = orange
+                self.cube.update(self.cursor[0])
+                self.now[num[self.cursor[0]]][self.cursor[1]][self.cursor[2]] = orange
+                self.shift_right()
+            elif event.key == pygame.K_4:
+                self.cube.faces[self.cursor[0]].squares[self.cursor[1]][self.cursor[2]].col1 = blue
+                self.cube.update(self.cursor[0])
+                self.now[num[self.cursor[0]]][self.cursor[1]][self.cursor[2]] = blue
+                self.shift_right()
+            elif event.key == pygame.K_5:
+                self.cube.faces[self.cursor[0]].squares[self.cursor[1]][self.cursor[2]].col1 = red
+                self.cube.update(self.cursor[0])
+                self.now[num[self.cursor[0]]][self.cursor[1]][self.cursor[2]] = red
+                self.shift_right()
+            elif event.key == pygame.K_6:
+                self.cube.faces[self.cursor[0]].squares[self.cursor[1]][self.cursor[2]].col1 = yellow
+                self.cube.update(self.cursor[0])
+                self.now[num[self.cursor[0]]][self.cursor[1]][self.cursor[2]] = yellow
+                self.shift_right()
 
             if event.key == pygame.K_d and self.i < self.l:
                 self.m = True
@@ -1166,14 +1336,77 @@ class Solver():
 
         return new_l[dir]
 
-    def start_loop(self):
+    def solve(self):
+        self.white_cross()
+        self.insert_corners()
+        self.insert_other_edges()
+        self.yellow_cross()
+        self.last_corners()
+    
         self.short()
-        self.l = len(self.moves)
-        self.paint(now)
 
+    def shift_right(self):
+        tiles = { (0, 0) : (0, 1), (0, 1) : (0, 2), (0, 2) : (1, 0), (1, 0) : (1, 2), (1, 2) : (2, 0), (2, 0) : (2, 1), (2, 1) : (2, 2), (2, 2) : "last" }
+        now = tiles[(self.cursor[1], self.cursor[2])]
+        if now == "last":
+            if self.cursor[0] == "white":
+                self.x_rot = 0
+                self.cursor = ["green", 0, 0]
+            elif self.cursor[0] == "green":
+                self.y_rot = 90
+                self.cursor = ["orange", 0, 0]
+            elif self.cursor[0] == "orange":
+                self.y_rot = 180
+                self.cursor = ["blue", 0, 0]
+            elif self.cursor[0] == "blue":
+                self.y_rot = 270
+                self.cursor = ["red", 0, 0]
+            elif self.cursor[0] == "red":
+                self.y_rot = 0
+                self.x_rot = 270
+                self.cursor = ["yellow", 0, 0]
+            elif self.cursor[0] == "yellow":
+                self.x_rot = 0
+                self.start = False
+                self.solve()
+                self.l = len(self.moves)
+                self.paint2(self.now)
+                print(self.now)
+        else:
+            self.cursor[1] = now[0]
+            self.cursor[2] = now[1]
+
+    def shift_left(self):
+        tiles = { (2, 2) : (2, 1), (2, 1) : (2, 0), (2, 0) : (1, 2), (1, 2) : (1, 0), (1, 0) : (0, 2), (0, 2) : (0, 1), (0, 1) : (0, 0), (0, 0) : "last" }
+        now = tiles[(self.cursor[1], self.cursor[2])]
+        if now == "last":
+            if self.cursor[0] == "green":
+                self.x_rot = 90
+                self.cursor = ["white", 2, 2]
+            elif self.cursor[0] == "orange":
+                self.y_rot = 0
+                self.cursor = ["green", 2, 2]
+            elif self.cursor[0] == "blue":
+                self.y_rot = 90
+                self.cursor = ["orange", 2, 2]
+            elif self.cursor[0] == "red":
+                self.y_rot = 180
+                self.cursor = ["blue", 2, 2]
+            elif self.cursor[0] == "yellow":
+                self.cursor = ["red", 2, 2]
+                self.x_rot = 0
+                self.y_rot = 270
+        else:
+            self.cursor[1] = now[0]
+            self.cursor[2] = now[1]
+        
 def main():
     cube = Model.Cube()
     solver = Solver(cube)
+    #solver.paint(now.split())
+    #solver.solve()
+    #solver.paint(now)
+    #solver.l = len(solver.moves)
 
     pygame.init()
     size = (800,600)
@@ -1184,27 +1417,12 @@ def main():
     gluPerspective(45, (size[0]/size[1]), 0.1, 50.0)
     glTranslatef(0.0, 0.0, -10.0)
     glEnable(GL_DEPTH_TEST)
-
-    solver.paint(now)
-
-    solver.white_cross()
-    solver.insert_corners()
-    solver.insert_other_edges()
-    solver.yellow_cross()
-
-    solver.last_corners()
-    
-    solver.short()
-    
-    solver.start_loop()
     
     while True:
         for event in pygame.event.get():
             solver.event(event)
-            
-                
 
-        solver.Open_GL_draw()
+        solver.Open_GL_draw(display)
         solver.update()
         
             
