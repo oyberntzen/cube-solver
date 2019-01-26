@@ -1,5 +1,5 @@
-## Rubik's Cube Solver
-# Changing the color of the cube:
+# Rubik's Cube Solver
+## Changing the color of the cube:
     1. Orient the your cube using the color of the center of the faces. Use the helping colors around the cube in the program to rotate the your cube correctly.
 
     2. See which tile on the cube that is marked with a darker color.
@@ -10,7 +10,7 @@
 
     5. When you are done and the program detects if it is a valid cube, the program will continue.
 
-# See the solution:
+## See the solution:
     You can rotate the cube by using the arrow keys.
 
     Use D and A to go forward and backwards in the solving steps.
