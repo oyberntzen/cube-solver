@@ -1,9 +1,9 @@
-blue = 1
-green = 2
+white = 0
+green = 1
+orange = 2
+blue = 3
 red = 4
-orange = 13
-yellow = 14
-white = 15
+yellow = 5
 
 class Cube():
     def __init__(self):
