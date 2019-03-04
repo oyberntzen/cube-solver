@@ -205,10 +205,10 @@ class Config:
         self.cube = Model.Cube()
         self.solver3d = solver.Solver(self.cube)
         self.solver3d.start = False
-
+        print(self.guess_data)
         try:
             self.solver3d.paint2(self.guess_data)
-            self.solver3d.solve()
+            self.solver3d.solve2()
             self.solver3d.l = len(self.solver3d.moves)
             self.solver3d.paint2(self.guess_data)
             gluPerspective(45, (self.width / self.height), 0.1, 50.0)

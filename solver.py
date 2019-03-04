@@ -10,6 +10,12 @@ from OpenGL.GLUT import *
 
 import random
 
+import math
+
+import json
+
+import copy
+
 blue = Model.blue
 green = Model.green
 red = Model.red
@@ -31,6 +37,14 @@ sides = {
     }
 
 screen = terminal.get_terminal(conEmu=False)
+
+testing = [[[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 1], [2, 2, 5]], [[2, 2, 2], [2, 2, 2], [4, 4, 3]], [[3, 3, 3], [3, 3, 3], [1, 1, 5]], [[4, 4, 4], [4, 4, 4], [2, 3, 5]], [[5, 5, 1], [5, 5, 5], [3, 5, 4]]],
+           [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 1], [2, 3, 5]], [[2, 2, 2], [2, 2, 2], [2, 2, 5]], [[3, 3, 3], [3, 3, 3], [4, 4, 3]], [[4, 4, 4], [4, 4, 4], [1, 1, 5]], [[1, 5, 4], [5, 5, 5], [5, 5, 3]]],
+           [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 1], [4, 1, 2]], [[2, 2, 2], [2, 2, 2], [3, 3, 1]], [[3, 3, 3], [3, 3, 3], [2, 4, 4]], [[4, 4, 4], [4, 4, 4], [1, 2, 3]], [[5, 5, 5], [5, 5, 5], [5, 5, 5]]],
+           [[[0, 0, 0], [0, 0, 0], [0, 0, 3]], [[1, 1, 4], [1, 1, 4], [5, 1, 1]], [[2, 2, 2], [2, 2, 2], [1, 2, 2]], [[3, 3, 3], [3, 3, 3], [1, 1, 4]], [[5, 4, 4], [5, 4, 4], [4, 3, 2]], [[3, 4, 5], [5, 5, 5], [0, 5, 5]]],
+           [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 4], [1, 1, 4]], [[2, 2, 2], [2, 2, 2], [4, 1, 2]], [[3, 3, 3], [3, 3, 3], [2, 5, 5]], [[4, 4, 4], [5, 4, 4], [5, 5, 3]], [[5, 5, 1], [4, 5, 3], [3, 2, 5]]],
+           [[[1, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 4], [5, 5, 3]], [[5, 2, 2], [4, 2, 2], [2, 1, 4]], [[3, 3, 2], [3, 3, 1], [2, 5, 0]], [[4, 4, 4], [5, 4, 4], [5, 3, 3]], [[1, 3, 4], [5, 5, 2], [3, 2, 5]]]
+           ]
 
 class Rotation:
     """Manage rotation of a given face color"""
@@ -125,8 +139,6 @@ class Solver():
     def __init__(self, cube):
         self.cube = cube
 
-        self.moveMode = "face"
-
         self.moves = []
 
         self.offset = 0.05
@@ -164,34 +176,214 @@ class Solver():
                     [[4 for i in range(3)] for i in range(3)], 
                     [[5 for i in range(3)] for i in range(3)]]
 
-    def setMode(self, mode):
-        self.moveMode = mode
+        with open("algorithms.json", "r") as algorithms:
+            self.algorithms = json.load(algorithms)
+
+    def execute(self, algo, front, top, rotation = 0):
+
+        faces = {
+            "white": ["green", "red", "blue", "orange", "yellow"],
+            "yellow": ["blue", "red", "green", "orange", "white"],
+            "green": ["yellow", "red", "white", "orange", "blue"],
+            "orange": ["yellow", "green", "white", "blue", "red"],
+            "blue": ["yellow", "orange", "white", "red", "green"],
+            "red": ["yellow", "blue", "white", "green", "orange"]
+            }
+
+        shift = 0
+        for i in range(len(faces[top])):
+            if faces[top][i] == front:
+                shift = i
+                break
+
+        #U F R B L D
+        notations = {
+            "U": top, 
+            "F": faces[top][(shift + rotation) % 4],
+            "R": faces[top][(shift + 1 + rotation) % 4],
+            "B": faces[top][(shift + 2 + rotation) % 4],
+            "L": faces[top][(shift + 3 + rotation) % 4],
+            "D": faces[top][4],
+            }
+
+        step1 = algo.split(" ")
+        step2 = []
+        for i in step1:
+            if len(i) > 1:
+                if i[1] == "2":
+                    for j in range(2):
+                        step2.append(i[0])
+                elif i[1] == "'":
+                    for j in range(3):
+                        step2.append(i[0])
+            else:
+                step2.append(i[0])
+        step3 = []
+        for i in step2:
+            step3.append(notations[i])
+
+        for i in step3:
+            self.move(i)
+
+    def check_cases(self, case):
+        #print(case)
+        opposite = { 0: 5, 1: 3, 2: 4, 3: 1, 4: 2, 5: 0 }
+        rotation = 0
+        alg = ""
+        for i in case["cases"]:
+            for k in range(4):
+                req = i[0].split(", ")
+                good = True
+                for j in req:
+                    sections = j.split(" ")
+                    tile = self.cube.faces[face_names[int(sections[0][0])]].squares[int(sections[0][2])][int(sections[0][1])].col1
+                    if len(sections[2]) == 1:
+                        other = int(sections[2])
+                    elif len(sections[2]) == 3:
+                        other = self.cube.faces[face_names[int(sections[2][0])]].squares[int(sections[2][2])][int(sections[2][1])].col1
+                    #print(sections, tile)
+                    if sections[1] == "=":
+                        if not tile == other:
+                            good = False
+                            break
+                    elif sections[1] == "!":
+                        if tile == other:
+                            good = False
+                            break
+                    elif sections[1] == "/":
+                        if not opposite[tile] == other:
+                            good = False
+                            break
+                if good:
+                    rotation = k
+                    alg = i[1]
+                self.move(case["rotation"])
+
+        return alg, rotation
+
+    def tran_OLL(self, case):
+        oll_cases = ["500", "510", "520", "501", "511", "521", "502", "512", "522", "102", "112", "122", "402", "412", "422", "302", "312", "322", "202", "212", "222"]
+        cases = copy.deepcopy(case)
+        l = len(cases["cases"])
+        for i in range(l):
+            numbers = cases["cases"][i][0]
+            new = []
+            length = len(numbers)
+            for j in range(length):
+                #print(j)
+                if numbers[j] == "0":
+                    new.append(oll_cases[j] + " ! 5")
+                elif numbers[j] == "1":
+                    new.append(oll_cases[j] + " = 5")
+                else:
+                    pass
+            cases["cases"][i][0] = ", ".join(new)
+        return cases
+
+    def tran_PLL(self, case):
+        pll_cases = ["102", "112", "122", "402", "412", "422", "302", "312", "322", "202", "212", "222"]
+        cases = copy.deepcopy(case)
+        l = len(cases["cases"])
+        for i in range(l):
+            numbers = cases["cases"][i][0]
+            places = [None for j in range(4)]
+            all = [[] for j in range(4)]
+            length = len(numbers)
+            for j in range(length):
+                if not places[int(numbers[j]) - 1]:
+                    places[int(numbers[j]) - 1] = pll_cases[j]
+                else:
+                    all[int(numbers[j]) - 1].append(pll_cases[j])
+            new = []
+            new.append(places[0] + " / " + places[2])
+            new.append(places[1] + " / " + places[3])
+            for j in range(len(all)):
+                for k in all[j]:
+                    new.append(k + " = " + places[j])
+            cases["cases"][i][0] = ", ".join(new)
+        return cases
+
+    def tran_F2L(self, case, front):
+        faces = {
+            "green": ["2", "3", "4"],
+            "orange": ["3", "4", "1"],
+            "blue": ["4", "1", "2"],
+            "red": ["1", "2", "3"]
+            }
+
+        pos_corner = {
+            "5": { "21": "500", "32": "502", "43": "522", "14": "520" },
+            "1": { "20": "100", "52": "102", "45": "122", "04": "120" },
+            "2": { "30": "200", "53": "202", "15": "222", "01": "220" },
+            "3": { "40": "300", "54": "302", "25": "322", "02": "320" },
+            "4": { "10": "400", "51": "402", "35": "422", "03": "420" },
+            "0": { "23": "000", "12": "002", "41": "022", "34": "020" },
+            }
+
+        pos_edge = {
+            "5": { "1": "510", "2": "501", "3": "512", "4": "521" },
+            "1": { "0": "110", "2": "101", "5": "112", "4": "121" },
+            "2": { "0": "210", "3": "201", "5": "212", "1": "221" },
+            "3": { "0": "310", "4": "301", "5": "312", "2": "321" },
+            "4": { "0": "410", "1": "401", "5": "412", "3": "421" },
+            "0": { "3": "010", "2": "001", "1": "012", "4": "021" },
+            }
+
+        front_tran = {
+            "white": "0",
+            "green": "1",
+            "orange": "2",
+            "blue": "3",
+            "red": "4",
+            "yellow": "5"
+            }
+        
+        tran = ["5", front_tran[front]] + faces[front] + ["0"]
+        cases = copy.deepcopy(case)
+        l = len(cases["cases"])
+        for i in range(l):
+            numbers = cases["cases"][i][0]
+            corner = numbers[:3]
+            edge = numbers[3:]
+            all_case = []
+            all_case.append(pos_corner[tran[int(corner[0])]][tran[int(corner[1])] + tran[int(corner[2])]] + " = 0")
+            all_case.append(pos_corner[tran[int(corner[1])]][tran[int(corner[2])] + tran[int(corner[0])]] + " = " + tran[1])
+            all_case.append(pos_corner[tran[int(corner[2])]][tran[int(corner[0])] + tran[int(corner[1])]] + " = " + tran[2])
+
+            all_case.append(pos_edge[tran[int(edge[0])]][tran[int(edge[1])]] + " = " + tran[1])
+            all_case.append(pos_edge[tran[int(edge[1])]][tran[int(edge[0])]] + " = " + tran[2])
+            
+            cases["cases"][i][0] = ", ".join(all_case)
+        return cases
 
     #Moves given face
     def move(self, m):
-        if self.moveMode == "face":
-            self.cube.rotate(m)
-            self.moves.append(m)
+        self.cube.rotate(m)
+        self.moves.append(m)
 
     #Shorts up solving moves
     def short(self):
-        new_moves = []
-        for i in self.moves:
-            if not len(new_moves) == 0:
-                before_row = new_moves[len(new_moves) - 1]
-                if before_row[0] == i:
-                    before_row.append(i)
+        done = False
+        while not done:
+            new_moves = []
+            for i in self.moves:
+                if not len(new_moves) == 0:
+                    before_row = new_moves[len(new_moves) - 1]
+                    if before_row[0] == i:
+                        before_row.append(i)
+                    else:
+                        new_moves.append([i])
                 else:
-                    new_moves.append([i])
-            else:
-                 new_moves.append([i])
+                     new_moves.append([i])
 
-        moves = []
-        for move in new_moves:
-            for i in range(len(move) % 4):
-                moves.append(move[0])
+            moves = []
+            for move in new_moves:
+                for i in range(len(move) % 4):
+                    moves.append(move[0])
 
-        self.moves = moves
+            if self.moves == moves:
+                done = True
+            self.moves = moves
 
     #Returns solving moves in cube notation
     def notes(self):
@@ -213,7 +405,7 @@ class Solver():
             elif len(i) == 2:
                 notation.append(i[0][0].upper() + "2")
             elif len(i) == 3:
-                notation.append(i[0][0].upper() + "`")
+                notation.append(i[0][0].upper() + "'")
 
         return notation
 
@@ -510,8 +702,7 @@ class Solver():
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
-                    pass
-                    #glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
+                    glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
                 else:
                     glColor3f(*openGLcolors[colors[tilenum][0]])
                 glVertex3fv((xcorner+self.offset, ycorner+self.offset, z))
@@ -540,8 +731,7 @@ class Solver():
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
-                    pass
-                    #glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
+                    glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
                 else:
                     glColor3f(*openGLcolors[colors[tilenum][0]])
                 glVertex3fv((xcorner+self.offset, ycorner+self.offset, z))
@@ -570,8 +760,7 @@ class Solver():
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
-                    pass
-                    #glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
+                    glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
                 else:
                     glColor3f(*openGLcolors[colors[tilenum][0]])
                 glVertex3fv((x, ycorner+self.offset, zcorner+self.offset))
@@ -600,8 +789,7 @@ class Solver():
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
-                    pass
-                    #glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
+                    glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
                 else:
                     glColor3f(*openGLcolors[colors[tilenum][0]])
                 glVertex3fv((x, ycorner+self.offset, zcorner+self.offset))
@@ -630,8 +818,7 @@ class Solver():
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
-                    pass
-                    #glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
+                    glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
                 else:
                     glColor3f(*openGLcolors[colors[tilenum][0]])
                 glVertex3fv((xcorner+self.offset, y, zcorner+self.offset))
@@ -660,8 +847,7 @@ class Solver():
                         rotation.apply_rotation()
                 glBegin(GL_POLYGON)
                 if self.cursor[0] == facecolor and self.cursor[1] == colors[tilenum][1] and self.cursor[2] == colors[tilenum][2] and self.start:
-                    pass
-                    #glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
+                    glColor3f(openGLcolors[colors[tilenum][0]][0] * 0.5, openGLcolors[colors[tilenum][0]][1] * 0.5, openGLcolors[colors[tilenum][0]][2] * 0.5)
                 else:
                     glColor3f(*openGLcolors[colors[tilenum][0]])
                 glVertex3fv((xcorner+self.offset, y, zcorner+self.offset))
@@ -1077,6 +1263,17 @@ class Solver():
         elif up[1] and up[3] and not up[0]:
             self.cross_algo("green")
 
+    def yellow_cross_lite(self):
+        up = [self.cube.faces["yellow"].squares[2][1].col1 == yellow,
+              self.cube.faces["yellow"].squares[1][2].col1 == yellow,
+              self.cube.faces["yellow"].squares[0][1].col1 == yellow,
+              self.cube.faces["yellow"].squares[1][0].col1 == yellow]
+
+        if not True in up:
+            self.cross_algo("green")
+
+    def yellow_cross2(self):
+
         sides = [face_names[self.cube.faces["yellow"].squares[2][1].col2],
                  face_names[self.cube.faces["yellow"].squares[1][2].col2],
                  face_names[self.cube.faces["yellow"].squares[0][1].col2],
@@ -1392,16 +1589,123 @@ class Solver():
 
     #Solves the cube
     def solve(self):
+        self.moves = []
+        stats = []
         self.white_cross()
+        self.short()
+        #print(self.notes())
+        stats.append(self.length())
         self.insert_corners()
+        self.short()
+        stats.append(self.length() - math.fsum(stats))
         self.insert_other_edges()
+        self.short()
+        stats.append(self.length() - math.fsum(stats))
         self.yellow_cross()
+        self.yellow_cross2()
         self.last_corners()
+        self.short()
+        stats.append(self.length() - math.fsum(stats))
         
-        for i in range(5):
-            self.short()
+        #print(len(self.notes()), "moves.", self.notes())
+        return stats
 
-        print(len(self.notes()), "moves.", self.notes())
+    def F2L(self):
+        pairs = ["green", "orange", "blue", "red"]
+
+        for i in pairs:
+            self.move_corner_edge(i)
+            alg, rot = self.check_cases (self.tran_F2L(self.algorithms["cases"]["F2L"], i))
+            if not alg == "Done" and alg:
+                for j in range(rot):
+                    self.move("yellow")
+                self.execute(self.algorithms["algorithms"]["F2L"][alg], i, "yellow")
+
+    def last_layer(self):
+        algs = []
+        #self.yellow_cross_lite()
+
+        alg, rot = self.check_cases(self.tran_OLL(self.algorithms["cases"]["OLL"]))
+        #print(alg)
+        if not alg == "Done" and alg:
+            self.execute(self.algorithms["algorithms"]["OLL"][alg], "blue", "yellow", rot)
+        done, rot = self.check_cases(self.tran_OLL(self.algorithms["cases"]["OLL"]))
+        algs.append([alg, done == "Done"])
+
+        alg, rot = self.check_cases(self.tran_PLL(self.algorithms["cases"]["PLL"]))
+        if not alg == "Done" and alg:
+            self.execute(self.algorithms["algorithms"]["PLL"][alg], "blue", "yellow", rot)
+        done, rot = self.check_cases(self.tran_PLL(self.algorithms["cases"]["PLL"]))
+        algs.append([alg, done == "Done"])
+
+        pos = self.getEdge(yellow, green)
+        moves = self.rot_calc_edge("yellow", pos[1], "green")
+        for i in range(moves):
+            self.move("yellow")
+        return algs
+
+    def move_corner_edge(self, corner):
+        other = { 
+                "green": ["orange", "blue"],
+                "orange": ["blue", "red"],
+                "blue": ["red", "green"],
+                "red": ["green", "orange"],
+                "yellow": ["", ""],
+                "white": ["", ""]
+                }
+
+        posEdge = self.getEdge(face_names2[corner], face_names2[other[corner][0]])
+        posCorner = self.getCorner(white, face_names2[corner], face_names2[other[corner][0]])
+
+        #print(posEdge, corner)
+        if not "yellow" in posEdge:
+            #print("yes")
+            if other[posEdge[0]][0] == posEdge[1]:
+                edge = posEdge[0]
+            elif other[posEdge[1]][0] == posEdge[0]:
+                edge = posEdge[1]
+            self.execute(self.algorithms["algorithms"]["F2L"]["Out"], edge, "yellow")
+            posEdge = self.getEdge(face_names2[corner], face_names2[other[corner][0]])
+            posCorner = self.getCorner(white, face_names2[corner], face_names2[other[corner][0]])
+            #print(posEdge, "after")
+
+        if not "yellow" in posCorner:
+            
+            if posEdge[0] == "yellow":
+                edge = posEdge[1]
+            elif posEdge[1] == "yellow":
+                edge = posEdge[0]
+            if other[posCorner[1]][0] == posCorner[2]:
+                corner = posCorner[2]
+            elif other[posCorner[0]][0] == posCorner[1]:
+                corner = posCorner[1]
+            elif other[posCorner[2]][0] == posCorner[0]:
+                corner = posCorner[0]
+            for i in range(self.rot_calc_edge("yellow", edge, other[corner][1])):
+                self.move("yellow")
+            self.execute(self.algorithms["algorithms"]["F2L"]["Out"], other[other[corner][1]][0], "yellow")
+
+    def solve2(self):
+        self.moves = []
+        stats2 = []
+        self.white_cross()
+        self.short()
+        stats2.append(self.length())
+        #self.insert_corners()
+        self.short()
+        stats2.append(self.length() - math.fsum(stats2))
+        #self.insert_other_edges()
+        self.F2L()
+        self.short()
+        stats2.append(self.length() - math.fsum(stats2))
+        algs = self.last_layer()
+        self.short()
+        stats2.append(self.length() - math.fsum(stats2))
+
+        #self.tran_F2L(self.algorithms["cases"]["F2L"], "red")
+        algs = []
+        
+        return stats2, algs
 
     #Functions for shifting the marker's position
     def shift_right(self):
@@ -1474,10 +1778,38 @@ class Solver():
                         break
 
         return solved
+
+    def length(self):
+        before = ""
+        total = 0
+        for i in self.moves:
+            if not i == before:
+                total += 1
+                before = i
+        return total
         
 def main():
     cube = Model.Cube()
     solver = Solver(cube)
+    solver.start = False
+    mix = []
+    for i in range(random.randint(20, 50)):
+        mix.append(random.choice(["white", "green", "orange", "blue", "red", "yellow"]))
+    for i in mix:
+        solver.move(i)
+    solver.moves = []
+    print(solver.solve2())
+    solver.l = len(solver.moves)
+    moves = solver.moves
+    solver.solve()
+    for i in mix:
+        solver.move(i)
+    solver.moves = moves
+    """
+    solver.paint2(testing[5])
+    solver.solve2()
+    solver.paint2(testing[5])
+    solver.l = len(solver.moves)"""
 
     pygame.init()
     size = (800,600)
