@@ -77,7 +77,9 @@ class Config:
     def __init__(self, width, height):
         self.state = "pictures"
 
-        self.size = 200
+        self.size = 300
+        self.res = 50
+
         self.x = int((width - self.size) / 2)
         self.y = int((height - self.size) / 2)
         self.width = width
@@ -109,18 +111,18 @@ class Config:
 
         self.canvas = pygame.surface.Surface((width, height))
         self.image = None
-        self.tiles = [pygame.surface.Surface((self.size / 6, self.size / 6)) for i in range(9)]
+        self.tiles = [pygame.surface.Surface((self.res / 3, self.res / 3)) for i in range(9)]
 
     def saveFace(self, imagebad):
         image = pygame.surface.Surface((self.width, self.height))
         image.blit(imagebad, (0, 0), (0, 60, self.width, self.height))
 
         self.images[self.current_face].blit(image, (0, 0), (self.x, self.y, self.size, self.size))
-        self.images[self.current_face] = pygame.transform.scale(self.images[self.current_face], (int(self.size / 2), int(self.size / 2)))
+        self.images[self.current_face] = pygame.transform.scale(self.images[self.current_face], (self.res, self.res))
 
         for i in range(3):
             for j in range(3):
-                self.tiles[i * 3 + j].blit(self.images[self.current_face], (0, 0), (i * self.size / 6, j * self.size / 6, self.size / 6,self. size / 6))
+                self.tiles[i * 3 + j].blit(self.images[self.current_face], (0, 0), (i * self.res / 3, j * self.res / 3, self.res / 3, self.res / 3))
     
         color_intervals = []
         for tile in self.tiles:
@@ -242,8 +244,8 @@ class Config:
             self.image = pygame.image.frombuffer(frame.tostring(), frame.shape[1::-1], "RGB")
             self.canvas.blit(self.image, (0, 0), (0, 60, self.width, self.height))
 
-            for i in range(self.x, self.x + self.size - int(self.size / 3), int(self.size / 3)):
-                for j in range(self.y, self.y + self.size - int(self.size / 3), int(self.size / 3)):
+            for i in range(self.x, self.x + self.size - int(self.size / 3) + 1, int(self.size / 3)):
+                for j in range(self.y, self.y + self.size - int(self.size / 3) + 1, int(self.size / 3)):
                     pygame.draw.rect(self.canvas, (0, 0, 0), (i, j, self.size / 3, self.size / 3), 3)
 
             for i in range(len(self.sides[self.current_face])):
@@ -253,12 +255,12 @@ class Config:
             self.canvas.fill((0, 0, 0))
 
             for i in range(self.total_faces):
-                self.canvas.blit(self.images[i], (i * self.size / 2, 0))
+                self.canvas.blit(self.images[i], (i * self.res, 0))
                 for j in range(3):
                     for k in range(3):
-                        pygame.draw.rect(self.canvas, self.face_data[i][j * 3 + k].min, (i * self.size / 2 + j * (self.size / 6), self.size / 2 + k * (self.size / 6), self.size / 12, self.size / 6))
-                        pygame.draw.rect(self.canvas, self.face_data[i][j * 3 + k].max, (i * self.size / 2 + j * (self.size / 6) + self.size / 12, self.size / 2 + k * (self.size / 6), self.size / 12, self.size / 6))
-                        pygame.draw.rect(self.canvas, self.color_data[self.guess_data[i][j][k]].average(), (i * self.size / 2 + j * (self.size / 6), self.size + k * (self.size / 6), self.size / 6, self.size / 6))
+                        pygame.draw.rect(self.canvas, self.face_data[i][j * 3 + k].min, (i * self.res + j * (self.res / 3), self.res + k * (self.res / 3), self.res / 6, self.res / 3))
+                        pygame.draw.rect(self.canvas, self.face_data[i][j * 3 + k].max, (i * self.res + j * (self.res / 3) + self.res / 6, self.res + k * (self.res / 3), self.res / 6, self.res / 3))
+                        pygame.draw.rect(self.canvas, self.color_data[self.guess_data[i][j][k]].average(), (i * self.res + j * (self.res / 3), self.res + k * (self.res / 3), self.res / 3, self.res / 3))
 
         if not self.state == "solve":
             self.id = self.texid(self.canvas)
