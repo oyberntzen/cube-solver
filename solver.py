@@ -1612,7 +1612,7 @@ class Solver():
 
     def F2L(self):
         pairs = ["green", "orange", "blue", "red"]
-
+        other = []
         for i in pairs:
             self.move_corner_edge(i)
             alg, rot = self.check_cases (self.tran_F2L(self.algorithms["cases"]["F2L"], i))
@@ -1620,6 +1620,12 @@ class Solver():
                 for j in range(rot):
                     self.move("yellow")
                 self.execute(self.algorithms["algorithms"]["F2L"][alg], i, "yellow")
+
+            done, rot = self.check_cases (self.tran_F2L(self.algorithms["cases"]["F2L"], i))
+            if not done == "Done":
+                print(alg, done == "Done", other)
+
+            other.append(alg)
 
     def last_layer(self):
         algs = []
@@ -1658,7 +1664,9 @@ class Solver():
         posCorner = self.getCorner(white, face_names2[corner], face_names2[other[corner][0]])
 
         #print(posEdge, corner)
-        if not "yellow" in posEdge:
+        if not "yellow" in posEdge and not "yellow" in posCorner:
+            """not ((corner in posEdge and other[corner][0] in posEdge and ("yellow" in posCorner or \
+           (corner in posCorner and other[corner][0] in posCorner and "white" in posCorner))) or "yellow" in posCorner):"""
             #print("yes")
             if other[posEdge[0]][0] == posEdge[1]:
                 edge = posEdge[0]
@@ -1669,7 +1677,9 @@ class Solver():
             posCorner = self.getCorner(white, face_names2[corner], face_names2[other[corner][0]])
             #print(posEdge, "after")
 
-        if not "yellow" in posCorner:
+        """if not "yellow" in posCorner and \
+           not (corner in posCorner and other[corner][0] in posCorner and "white" in posCorner and ("yellow" in posEdge or \
+           (corner in posEdge and other[corner][0] in posEdge))):
             
             if posEdge[0] == "yellow":
                 edge = posEdge[1]
@@ -1683,7 +1693,7 @@ class Solver():
                 corner = posCorner[0]
             for i in range(self.rot_calc_edge("yellow", edge, other[corner][1])):
                 self.move("yellow")
-            self.execute(self.algorithms["algorithms"]["F2L"]["Out"], other[other[corner][1]][0], "yellow")
+            self.execute(self.algorithms["algorithms"]["F2L"]["Out"], other[other[corner][1]][0], "yellow")"""
 
     def solve2(self):
         self.moves = []
