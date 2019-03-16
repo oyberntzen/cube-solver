@@ -78,7 +78,7 @@ class Config:
         self.state = "pictures"
 
         self.size = 300
-        self.res = 50
+        self.res = 150
 
         self.x = int((width - self.size) / 2)
         self.y = int((height - self.size) / 2)

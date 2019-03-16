@@ -40,7 +40,11 @@ testing = [[[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 1], [2, 2, 5]]
            [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 1], [4, 1, 2]], [[2, 2, 2], [2, 2, 2], [3, 3, 1]], [[3, 3, 3], [3, 3, 3], [2, 4, 4]], [[4, 4, 4], [4, 4, 4], [1, 2, 3]], [[5, 5, 5], [5, 5, 5], [5, 5, 5]]],
            [[[0, 0, 0], [0, 0, 0], [0, 0, 3]], [[1, 1, 4], [1, 1, 4], [5, 1, 1]], [[2, 2, 2], [2, 2, 2], [1, 2, 2]], [[3, 3, 3], [3, 3, 3], [1, 1, 4]], [[5, 4, 4], [5, 4, 4], [4, 3, 2]], [[3, 4, 5], [5, 5, 5], [0, 5, 5]]],
            [[[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 4], [1, 1, 4]], [[2, 2, 2], [2, 2, 2], [4, 1, 2]], [[3, 3, 3], [3, 3, 3], [2, 5, 5]], [[4, 4, 4], [5, 4, 4], [5, 5, 3]], [[5, 5, 1], [4, 5, 3], [3, 2, 5]]],
-           [[[1, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 4], [5, 5, 3]], [[5, 2, 2], [4, 2, 2], [2, 1, 4]], [[3, 3, 2], [3, 3, 1], [2, 5, 0]], [[4, 4, 4], [5, 4, 4], [5, 3, 3]], [[1, 3, 4], [5, 5, 2], [3, 2, 5]]]
+           [[[1, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 1, 1], [1, 1, 4], [5, 5, 3]], [[5, 2, 2], [4, 2, 2], [2, 1, 4]], [[3, 3, 2], [3, 3, 1], [2, 5, 0]], [[4, 4, 4], [5, 4, 4], [5, 3, 3]], [[1, 3, 4], [5, 5, 2], [3, 2, 5]]],
+           [[[0, 5, 5], [3, 0, 1], [0, 1, 1]], [[4, 2, 2], [5, 1, 3], [4, 4, 3]], [[1, 0, 1], [0, 2, 2], [4, 1, 3]], [[4, 4, 2], [2, 3, 2], [2, 0, 1]], [[5, 4, 3], [4, 4, 3], [0, 3, 3]], [[0, 0, 2], [5, 5, 5], [5, 1, 5]]],
+           [[[2, 2, 0], [3, 0, 3], [3, 0, 3]], [[4, 2, 4], [3, 1, 3], [1, 5, 4]], [[5, 2, 0], [0, 2, 4], [0, 0, 5]], [[1, 5, 3], [2, 3, 1], [5, 1, 3]], [[5, 5, 2], [0, 4, 1], [1, 4, 1]], [[4, 1, 0], [4, 5, 5], [2, 4, 2]]],
+           [[[0, 4, 2], [1, 0, 0], [1, 4, 2]], [[0, 1, 1], [1, 1, 5], [5, 5, 0]], [[3, 2, 4], [0, 2, 0], [5, 4, 4]], [[4, 0, 4], [5, 3, 3], [5, 3, 1]], [[0, 2, 3], [2, 4, 4], [2, 3, 2]], [[1, 1, 3], [3, 5, 5], [2, 2, 3]]],
+           [[[1, 3, 4], [3, 0, 1], [0, 2, 2]], [[2, 3, 3], [1, 1, 2], [3, 0, 1]], [[5, 4, 3], [0, 2, 0], [1, 5, 4]], [[5, 5, 2], [1, 3, 3], [4, 2, 4]], [[5, 4, 1], [5, 4, 2], [2, 5, 3]], [[5, 4, 0], [4, 5, 1], [0, 0, 0]]]
            ]
 
 class Rotation:
@@ -1260,15 +1264,6 @@ class Solver():
         elif up[1] and up[3] and not up[0]:
             self.cross_algo("green")
 
-    def yellow_cross_lite(self):
-        up = [self.cube.faces["yellow"].squares[2][1].col1 == yellow,
-              self.cube.faces["yellow"].squares[1][2].col1 == yellow,
-              self.cube.faces["yellow"].squares[0][1].col1 == yellow,
-              self.cube.faces["yellow"].squares[1][0].col1 == yellow]
-
-        if not True in up:
-            self.cross_algo("green")
-
     def yellow_cross2(self):
 
         sides = [face_names[self.cube.faces["yellow"].squares[2][1].col2],
@@ -1607,29 +1602,150 @@ class Solver():
         #print(len(self.notes()), "moves.", self.notes())
         return stats
 
+    def insert_edge2(self, col, solved):
+        pos = self.getEdge(face_names2[col], white)
+
+        if pos[0] == "white":
+            self.move(pos[1])
+            pos = self.getEdge(face_names2[col], white)
+        elif pos[0] == "yellow":
+            protect = [self.getEdge(face_names2[i], white)[0] for i in solved]
+            while pos[1] in protect:
+                self.move("yellow")
+                pos = self.getEdge(face_names2[col], white)
+            self.move(pos[1])
+            pos = self.getEdge(face_names2[col], white)
+        elif pos[1] == "white":
+            self.move(pos[0])
+            pos = self.getEdge(face_names2[col], white)
+
+        
+        rot = ["green", "orange", "blue", "red"]
+        if not len(solved) == 0:
+            reference = solved[0]
+            wanted = (rot.index(reference) - rot.index(col)) % 4
+            difference = (rot.index(self.getEdge(face_names2[reference], white)[0]) - 
+                          rot.index(self.getEdge(face_names2[col], white)[0])) % 4
+            rotations = (wanted - difference) % 4
+
+            for i in range(rotations):
+                self.move("white")
+
+        while not pos[1] == "white": 
+            self.move(pos[0])
+            pos = self.getEdge(face_names2[col], white)
+
+    def cross2(self):
+        edges = ["green", "orange", "blue", "red"]
+        record = [100000, []]
+        for i in edges:
+            edges2 = [n for n in edges if n != i]
+            for j in edges2:
+                edges3 = [n for n in edges2 if n != j]
+                for k in edges3:
+                    edges4 = [n for n in edges3 if n != k]
+                    for l in edges4:
+                        self.insert_edge2(i, [])
+                        self.insert_edge2(j, [i])
+                        self.insert_edge2(k, [i, j])
+                        self.insert_edge2(l, [i, j, k])
+                        self.short()
+                        if self.length() < record[0]:
+                            record = [self.length(), [i, j, k, l]]
+                        back = self.moves.copy()
+                        back.reverse()
+                        for a in back:
+                            for b in range(3):
+                                self.move(a)
+                        self.moves = []
+
+        self.insert_edge2(record[1][0], [])
+        self.insert_edge2(record[1][1], [record[1][0]])
+        self.insert_edge2(record[1][2], [record[1][0], record[1][1]])
+        self.insert_edge2(record[1][3], [record[1][0], record[1][1], record[1][2]])
+        self.short()
+
+        pos = self.getEdge(green, white)
+        rotations = self.rot_calc_edge("white", pos[0], "green")
+        for i in range(rotations):
+            self.move("white")
+
+    def move_corner_edge(self, corner):
+        other = { 
+                "green": ["orange", "blue"],
+                "orange": ["blue", "red"],
+                "blue": ["red", "green"],
+                "red": ["green", "orange"],
+                "yellow": ["", ""],
+                "white": ["", ""]
+                }
+
+        posEdge = self.getEdge(face_names2[corner], face_names2[other[corner][0]])
+        posCorner = self.getCorner(white, face_names2[corner], face_names2[other[corner][0]])
+
+        if not "yellow" in posEdge and not "yellow" in posCorner:
+            if other[posEdge[0]][0] == posEdge[1]:
+                edge = posEdge[0]
+            elif other[posEdge[1]][0] == posEdge[0]:
+                edge = posEdge[1]
+            self.execute(self.algorithms["algorithms"]["F2L"]["Out"], edge, "yellow")
+            posEdge = self.getEdge(face_names2[corner], face_names2[other[corner][0]])
+            posCorner = self.getCorner(white, face_names2[corner], face_names2[other[corner][0]])
+
+    def insert_pair(self, col):
+        self.move_corner_edge(col)
+        alg, rot = self.check_cases (self.tran_F2L(self.algorithms["cases"]["F2L"], col))
+        if not alg == "Done" and alg:
+            for j in range(rot):
+                self.move("yellow")
+            self.execute(self.algorithms["algorithms"]["F2L"][alg], col, "yellow")
+
+        done, rot = self.check_cases (self.tran_F2L(self.algorithms["cases"]["F2L"], col))
+        return done
+
     def F2L(self):
         pairs = ["green", "orange", "blue", "red"]
-        other = []
+        record = [100000, []]
+        self.moves.append("seperator")
+        index = len(self.moves)
+        before = self.moves.copy()
+
         for i in pairs:
-            self.move_corner_edge(i)
-            alg, rot = self.check_cases (self.tran_F2L(self.algorithms["cases"]["F2L"], i))
-            if not alg == "Done" and alg:
-                for j in range(rot):
-                    self.move("yellow")
-                self.execute(self.algorithms["algorithms"]["F2L"][alg], i, "yellow")
+            pairs2 = [n for n in pairs if n != i]
+            for j in pairs2:
+                pairs3 = [n for n in pairs2 if n != j]
+                for k in pairs3:
+                    pairs4 = [n for n in pairs3 if n != k]
+                    for l in pairs4:
+                        #print(self.moves, "before")
+                        self.insert_pair(i)
+                        self.insert_pair(j)
+                        self.insert_pair(k)
+                        self.insert_pair(l)
+                        self.short()
+                        if self.length() < record[0]:
+                            record = [self.length(), [i, j, k, l]]
+                        back = self.moves[index:len(self.moves)].copy()
+                        #print(self.moves, "after")
+                        #print(back, "back")
+                        back.reverse()
+                        for a in back:
+                            for b in range(3):
+                                self.move(a)
+                        self.moves = self.moves[0:index]
 
-            done, rot = self.check_cases (self.tran_F2L(self.algorithms["cases"]["F2L"], i))
-            if not done == "Done":
-                print(alg, done == "Done", other)
+        self.insert_pair(record[1][0])
+        self.insert_pair(record[1][1])
+        self.insert_pair(record[1][2])
+        self.insert_pair(record[1][3])
 
-            other.append(alg)
+        self.moves.remove("seperator")
 
     def last_layer(self):
         algs = []
         #self.yellow_cross_lite()
 
         alg, rot = self.check_cases(self.tran_OLL(self.algorithms["cases"]["OLL"]))
-        #print(alg)
         if not alg == "Done" and alg:
             self.execute(self.algorithms["algorithms"]["OLL"][alg], "blue", "yellow", rot)
         done, rot = self.check_cases(self.tran_OLL(self.algorithms["cases"]["OLL"]))
@@ -1647,55 +1763,12 @@ class Solver():
             self.move("yellow")
         return algs
 
-    def move_corner_edge(self, corner):
-        other = { 
-                "green": ["orange", "blue"],
-                "orange": ["blue", "red"],
-                "blue": ["red", "green"],
-                "red": ["green", "orange"],
-                "yellow": ["", ""],
-                "white": ["", ""]
-                }
-
-        posEdge = self.getEdge(face_names2[corner], face_names2[other[corner][0]])
-        posCorner = self.getCorner(white, face_names2[corner], face_names2[other[corner][0]])
-
-        #print(posEdge, corner)
-        if not "yellow" in posEdge and not "yellow" in posCorner:
-            """not ((corner in posEdge and other[corner][0] in posEdge and ("yellow" in posCorner or \
-           (corner in posCorner and other[corner][0] in posCorner and "white" in posCorner))) or "yellow" in posCorner):"""
-            #print("yes")
-            if other[posEdge[0]][0] == posEdge[1]:
-                edge = posEdge[0]
-            elif other[posEdge[1]][0] == posEdge[0]:
-                edge = posEdge[1]
-            self.execute(self.algorithms["algorithms"]["F2L"]["Out"], edge, "yellow")
-            posEdge = self.getEdge(face_names2[corner], face_names2[other[corner][0]])
-            posCorner = self.getCorner(white, face_names2[corner], face_names2[other[corner][0]])
-            #print(posEdge, "after")
-
-        """if not "yellow" in posCorner and \
-           not (corner in posCorner and other[corner][0] in posCorner and "white" in posCorner and ("yellow" in posEdge or \
-           (corner in posEdge and other[corner][0] in posEdge))):
-            
-            if posEdge[0] == "yellow":
-                edge = posEdge[1]
-            elif posEdge[1] == "yellow":
-                edge = posEdge[0]
-            if other[posCorner[1]][0] == posCorner[2]:
-                corner = posCorner[2]
-            elif other[posCorner[0]][0] == posCorner[1]:
-                corner = posCorner[1]
-            elif other[posCorner[2]][0] == posCorner[0]:
-                corner = posCorner[0]
-            for i in range(self.rot_calc_edge("yellow", edge, other[corner][1])):
-                self.move("yellow")
-            self.execute(self.algorithms["algorithms"]["F2L"]["Out"], other[other[corner][1]][0], "yellow")"""
+    
 
     def solve2(self):
         self.moves = []
         stats2 = []
-        self.white_cross()
+        self.cross2()
         self.short()
         stats2.append(self.length())
         #self.insert_corners()
@@ -1799,7 +1872,7 @@ def main():
     cube = Model.Cube()
     solver = Solver(cube)
     solver.start = False
-    mix = []
+    """mix = []
     for i in range(random.randint(20, 50)):
         mix.append(random.choice(["white", "green", "orange", "blue", "red", "yellow"]))
     for i in mix:
@@ -1813,10 +1886,10 @@ def main():
         solver.move(i)
     solver.moves = moves
     """
-    solver.paint2(testing[5])
+    solver.paint2(testing[8])
     solver.solve2()
-    solver.paint2(testing[5])
-    solver.l = len(solver.moves)"""
+    solver.paint2(testing[8])
+    solver.l = len(solver.moves)
 
     pygame.init()
     size = (800,600)

@@ -4,7 +4,7 @@
       "27": "L U L' U L U2 L'",
       "26": "R' U' R U' R' U2 R",
       "21": "R U2 R' U' R U R' U' R U' R'",
-      "22": "R U2' R2 U' R2 U' R2 U2' R",
+      "22": "R U2 R2 U' R2 U' R2 U2 R",
       "23": "R2 D R' U2 R D' R' U2 R'",
       "24": "R' F' L F R F' L' F",
       "25": "R' F R B' R' F' R B",
@@ -53,14 +53,14 @@
       "5": "R' F2 L F L' F R",
       "28": "R' L F R L' U2 R' L F R L'",
 
-      "1": "R U2 R2' F R F' U2' R' F R F'",
+      "1": "R U2 R2 F R F' U2 R' F R F'",
       "2": "F R U R' U' F' B U L U' L' B'",
       "3": "B U L U' L' B' U' F R U R' U' F'",
       "4": "B U L U' L' B' U F R U R' U' F'",
       "17": "R U R' U R' F R F' U2 R' F R F'",
       "20": "R B U B' R' F2 B D' L' D B' F2",
       "18": "F R U R' U F' U2 F' L F L'",
-      "19": "L' R B R B R' B' L R2' F R F'"
+      "19": "L' R B R B R' B' L R2 F R F'"
     },
     "PLL": {
       "Ub": "R2 U R U R' U' R' U' R' U R'",
@@ -133,7 +133,7 @@
       "NS2": "R U' R' U2 F' U' F U' F' U F",
       "NS3": "R U' R' U' R U R' U2 R U' R'",
       "NS4": "L F' L' U2 L F L' R U R'",
-      "NU1": "R' F R F' R' U2 R2 U R2' U R",
+      "NU1": "R' F R F' R' U2 R2 U R2 U R",
 
       "CU3": "U' R' U R2 U' R'",
       "CU4": "U R' U R U' R' U' R F' U F",
@@ -148,9 +148,9 @@
       "CS8": "F U2 F' R U R'",
       "CS9": "U L U L' R U R'",
       "CS10": "U2 L' B L B' R U R'",
-      "CS11": "U2 R U R2' U' R2 U R'",
+      "CS11": "U2 R U R2 U' R2 U R'",
       "CS12": "R' U2 R F' U' F",
-      "CS13": "F U F2' U' F",
+      "CS13": "F U F2 U' F",
       "CS14": "L' U' L U F' U' F",
       "CS15": "U' L U' L' R U' R'",
       "CS16": "U2 L F' U' F L'",
