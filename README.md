@@ -1,5 +1,7 @@
 # Rubik's Cube Solver
 
+[![GIF](https://github.com/oyberntzen/cube-solver/blob/master/video.gif)](https://github.com/oyberntzen/cube-solver/blob/master/video.gif)
+
 - [About](#about)
 - [Installation](#installation)
 - [Usage](#usage)
