@@ -137,7 +137,7 @@ class Rotation:
             glRotatef(self.rotation, 0, -1, 0)
 
 class Solver():
-    def __init__(self, cube):
+    def __init__(self, cube = Model.Cube()):
         self.cube = cube
 
         self.moves = []
@@ -1786,6 +1786,13 @@ class Solver():
         algs = []
         
         return stats2, algs
+
+    def solve_optimal(self):
+        tran = {
+            "green": { "white": "green", "green": "yellow", "orange": "orange", "blue": "white", "red": "red", "yellow": "blue" }
+            }
+        green_solver = Solver(Model.Cube())
+        #self.cube.faces[]
 
     #Functions for shifting the marker's position
     def shift_right(self):

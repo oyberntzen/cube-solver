@@ -77,8 +77,8 @@ class Config:
     def __init__(self, width, height):
         self.state = "pictures"
 
-        self.size = 300
-        self.res = 150
+        self.size = 250
+        self.res = 100
 
         self.x = int((width - self.size) / 2)
         self.y = int((height - self.size) / 2)
@@ -175,6 +175,8 @@ class Config:
                 tile_colors[tile % 3][int(tile / 3)] = i
             self.guess_data.append(tile_colors)
 
+        print(self.guess_data)
+
     def texid(self, pyimage):
         texData = pygame.image.tostring(pyimage, "RGBA", 1)
         w = pyimage.get_width()
@@ -236,7 +238,7 @@ class Config:
                     self.state = "solve"
                     self.solve()
 
-    def update(self, canvas3d):
+    def update(self, canvas3d = None):
         if self.state == "pictures":
             ret, frame = self.cap.read()
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -262,12 +264,13 @@ class Config:
                         pygame.draw.rect(self.canvas, self.face_data[i][j * 3 + k].max, (i * self.res + j * (self.res / 3) + self.res / 6, self.res + k * (self.res / 3), self.res / 6, self.res / 3))
                         pygame.draw.rect(self.canvas, self.color_data[self.guess_data[i][j][k]].average(), (i * self.res + j * (self.res / 3), self.res + k * (self.res / 3), self.res / 3, self.res / 3))
 
-        if not self.state == "solve":
-            self.id = self.texid(self.canvas)
-            self.drawid()
-        else:
-            self.solver3d.Open_GL_draw(canvas3d)
-            self.solver3d.update()
+        if canvas3d:
+            if not self.state == "solve":
+                self.id = self.texid(self.canvas)
+                self.drawid()
+            else:
+                self.solver3d.Open_GL_draw(canvas3d)
+                self.solver3d.update()
 
 def main():
     pygame.init()
