@@ -1,34 +1,32 @@
 use colored::Colorize;
 use std::fmt;
 
-pub const ALL_CORNERS: [[u8; 3]; 24] = [
+pub const ALL_CORNERS: [[u8; 3]; 8] = [
     [0, 2, 1],
-    [1, 0, 2],
-    [2, 1, 0],
     [0, 1, 5],
-    [5, 0, 1],
-    [1, 5, 0],
     [5, 1, 3],
-    [3, 5, 1],
-    [1, 3, 5],
     [3, 1, 2],
-    [2, 3, 1],
-    [1, 2, 3],
     [0, 4, 2],
-    [2, 0, 4],
-    [4, 2, 0],
     [2, 4, 3],
-    [3, 2, 4],
-    [4, 3, 2],
     [3, 4, 5],
-    [5, 3, 4],
-    [4, 5, 3],
     [5, 4, 0],
-    [0, 5, 4],
-    [4, 0, 5],
 ];
 
-#[derive(Debug)]
+pub const ALL_EDGES: [[u8; 2]; 12] = [
+    [1, 0],
+    [1, 2],
+    [1, 3],
+    [1, 5],
+    [4, 0],
+    [4, 2],
+    [4, 3],
+    [4, 5],
+    [0, 2],
+    [2, 3],
+    [3, 5],
+    [5, 0],
+];
+
 pub struct Cube<const N: usize> {
     colors: [[[u8; N]; N]; 6],
 }
@@ -141,6 +139,60 @@ impl<const N: usize> Cube<N> {
         panic!("corner not found: {:?}", colors);
     }
 
+    pub fn get_edge(&self, colors: [u8; 2], n: usize) -> [usize; 2] {
+        if n > N - 3 {
+            panic!("n cant be greater than N - 3");
+        }
+
+        for face in 0..3 {
+            if self.colors[face][0][n + 1] == colors[0]
+                && self.colors[(face + 1) % 3][n + 1][0] == colors[1]
+            {
+                return [face, (face + 1) % 3];
+            }
+            if self.colors[face][N - n - 2][0] == colors[0]
+                && self.colors[(face + 2) % 3][0][N - n - 2] == colors[1]
+            {
+                return [face, (face + 2) % 3];
+            }
+            if self.colors[face][N - 1][N - n - 2] == colors[0]
+                && self.colors[(face + 1) % 3 + 3][N - n - 2][0] == colors[1]
+            {
+                return [face, (face + 1) % 3 + 3];
+            }
+            if self.colors[face][n + 1][N - 1] == colors[0]
+                && self.colors[(face + 2) % 3 + 3][0][n + 1] == colors[1]
+            {
+                return [face, (face + 2) % 3 + 3];
+            }
+        }
+
+        for face in 3..6 {
+            if self.colors[face][0][N - n - 2] == colors[0]
+                && self.colors[(face + 1) % 3][N - n - 2][N - 1] == colors[1]
+            {
+                return [face, (face + 1) % 3];
+            }
+            if self.colors[face][N - n - 2][N - 1] == colors[0]
+                && self.colors[(face + 2) % 3 + 3][N - 1][n + 1] == colors[1]
+            {
+                return [face, (face + 2) % 3 + 3];
+            }
+            if self.colors[face][N - 1][n + 1] == colors[0]
+                && self.colors[(face + 1) % 3 + 3][n + 1][N - 1] == colors[1]
+            {
+                return [face, (face + 1) % 3 + 3];
+            }
+            if self.colors[face][n + 1][0] == colors[0]
+                && self.colors[(face + 2) % 3][N - 1][n + 1] == colors[1]
+            {
+                return [face, (face + 2) % 3];
+            }
+        }
+
+        panic!("edge not found: {:?}, {:?}", colors, n)
+    }
+
     pub fn to_string(&self) -> String {
         let green_face = self.colors[0];
 
@@ -237,7 +289,7 @@ fn row_to_string<const N: usize>(row: &[u8; N]) -> String {
 }
 
 impl<const N: usize> fmt::Display for Cube<N> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -250,8 +302,23 @@ mod tests {
     fn get_corner() {
         let c = cube::Cube::<2>::solved();
         for corner in cube::ALL_CORNERS {
-            let pos = c.get_corner(corner);
-            assert_eq!(corner, [pos[0] as u8, pos[1] as u8, pos[2] as u8]);
+            for i in 0..3 {
+                let current_corner = [corner[i], corner[(i + 1) % 3], corner[(i + 2) % 3]];
+                let pos = c.get_corner(current_corner);
+                assert_eq!(current_corner, [pos[0] as u8, pos[1] as u8, pos[2] as u8]);
+            }
+        }
+    }
+
+    #[test]
+    fn get_edge() {
+        let c = cube::Cube::<3>::solved();
+        for edge in cube::ALL_EDGES {
+            for i in 0..2 {
+                let current_edge = [edge[i], edge[(i + 1) % 2]];
+                let pos = c.get_edge(current_edge, 0);
+                assert_eq!(current_edge, [pos[0] as u8, pos[1] as u8]);
+            }
         }
     }
 }

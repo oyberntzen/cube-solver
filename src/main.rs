@@ -1,7 +1,7 @@
 mod cube;
 
 fn main() {
-    let mut c = cube::Cube::<3>::solved();
+    let c = cube::Cube::<2>::solved();
 
     for corner in cube::ALL_CORNERS {
         let pos = c.get_corner(corner);
